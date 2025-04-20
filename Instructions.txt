@@ -1,0 +1,22 @@
+STEP-BY-STEP DEPLOYMENT GUIDE
+
+1. Create a free GitHub account (if you don't have one): https://github.com
+
+2. Create a new repository called: investment-dashboard
+
+3. Upload these files:
+   - streamlit_app.py
+   - requirements.txt
+   - .streamlit/secrets.toml
+
+4. Go to: https://share.streamlit.io and log in with your GitHub
+
+5. Click "New App", select your repo and branch, then choose 'streamlit_app.py' as the main file
+
+6. Click "Deploy" — done!
+
+LOGIN:
+Default Email: amahali.we@gmail.com
+Default Password: changeme
+
+You can change these in `.streamlit/secrets.toml`
