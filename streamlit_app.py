@@ -95,7 +95,13 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'buy_price': buy_prices[i]
             })
 
-        data = yf.download(tickers, period="1d")['Adj Close'].iloc[-1]
+        price_data = yf.download(tickers, period="1d")
+
+# Handle both single and multi-ticker downloads
+if isinstance(price_data.columns, pd.MultiIndex):
+    data = price_data['Adj Close'].iloc[-1]
+else:
+    data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
 
         results = []
         total_value = 0
