@@ -103,9 +103,10 @@ if isinstance(price_data.columns, pd.MultiIndex):
 else:
     data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
 
-        results = []
-        total_value = 0
-        total_cost = 0
+# ✅ These lines must NOT be indented
+results = []
+total_value = 0
+total_cost = 0
 
         for item in portfolio:
             ticker = item['ticker']
