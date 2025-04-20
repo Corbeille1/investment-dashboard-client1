@@ -108,28 +108,29 @@ results = []
 total_value = 0
 total_cost = 0
 
-        for item in portfolio:
-            ticker = item['ticker']
-            shares = item['shares']
-            buy_price = item['buy_price']
-            current_price = data[ticker]
-            value = shares * current_price
-            cost = shares * buy_price
-            pnl = value - cost
-            return_pct = (pnl / cost) * 100
+# This too — no extra spaces or tabs before it
+for item in portfolio:
+    ticker = item['ticker']
+    shares = item['shares']
+    buy_price = item['buy_price']
+    current_price = data[ticker]
+    value = shares * current_price
+    cost = shares * buy_price
+    pnl = value - cost
+    return_pct = (pnl / cost) * 100
 
-            total_value += value
-            total_cost += cost
+    total_value += value
+    total_cost += cost
 
-            results.append({
-                'Ticker': ticker,
-                'Shares': shares,
-                'Buy Price': buy_price,
-                'Current Price': round(current_price, 2),
-                'Current Value': round(value, 2),
-                'P&L': round(pnl, 2),
-                'Return %': round(return_pct, 2)
-            })
+    results.append({
+        'Ticker': ticker,
+        'Shares': shares,
+        'Buy Price': buy_price,
+        'Current Price': round(current_price, 2),
+        'Current Value': round(value, 2),
+        'P&L': round(pnl, 2),
+        'Return %': round(return_pct, 2)
+    })
 
         df = pd.DataFrame(results)
         st.subheader(t['summary'])
