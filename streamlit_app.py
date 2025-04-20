@@ -4,6 +4,9 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
 
+# 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
+st.set_page_config(page_title="Investment Dashboard", layout="wide")
+
 # --- LANGUAGE SWITCH ---
 lang = st.sidebar.selectbox("Language / 언어 / Langue", ["English", "Français", "한국어"])
 texts = {
@@ -62,7 +65,6 @@ t = texts[lang]
 EMAIL = st.secrets.get("EMAIL", "amahali.we@gmail.com")
 PASSWORD = st.secrets.get("PASSWORD", "changeme")
 
-st.set_page_config(page_title="Investment Dashboard", layout="wide")
 st.title(f"🔒 {t['login']}")
 
 email_input = st.text_input(t['email'])
