@@ -73,6 +73,11 @@ password_input = st.text_input(t['password'], type="password")
 if email_input == EMAIL and password_input == PASSWORD:
     st.success(t['success'])
 
+    # ... all your code for the dashboard here ...
+
+else:
+    st.warning(t['warning'])
+    
     st.title(f"📊 {t['title']}")
 
     st.subheader(t['tickers'])
@@ -179,5 +184,4 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
 col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
 col3.metric("CAGR", f"{cagr:.2%}")
-else:
-    st.warning(t['warning'])
+
