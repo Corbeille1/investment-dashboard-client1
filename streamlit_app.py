@@ -262,13 +262,22 @@ if st.session_state.show_dashboard:
         if not any(row["date"] == today for row in st.session_state.performance_history):
             st.session_state.performance_history.append({
                 "date": today,
-                "total_value": total_value,
-                "total_cost": total_cost,
-                "pnl": total_value - total_cost
+                "total_value": round(total_value, 2),
+                "total_cost": round(total_cost, 2),
+                "pnl": daily_pnl
             })
+
         # ✅ Save to JSON file for persistence
         with open("performance_history.json", "w") as f:
             json.dump(st.session_state.performance_history, f, indent=4)
+
+        # Build the history DataFrame
+        history_df = pd.DataFrame(st.session_state.performance_history)
+
+        if not history_df.empty:
+            history_df["date"] = pd.to_datetime(history_df["date"])
+            history_df = history_df.sort_values("date")
+            history_df.set_index("date", inplace=True)
 
         st.subheader(t['summary'])
         st.dataframe(df)
