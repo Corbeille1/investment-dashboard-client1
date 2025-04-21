@@ -97,6 +97,39 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'shares': shares[i],
                 'buy_price': buy_prices[i]
             })
+    # -------- LOAD PORTFOLIO FROM FILE --------
+    uploaded_file = st.file_uploader("📂 Load a saved portfolio", type=["json", "csv"])
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".json"):
+                portfolio = json.load(uploaded_file)
+            else:
+                df_uploaded = pd.read_csv(uploaded_file)
+                portfolio = df_uploaded.to_dict(orient="records")
+            st.success("✅ Portfolio loaded successfully!")
+            st.write(pd.DataFrame(portfolio))
+        except Exception as e:
+            st.error(f"❌ Failed to load portfolio: {e}")
+            st.stop()
+
+    # -------- SAVE PORTFOLIO --------
+    if portfolio:
+        json_data = json.dumps(portfolio, indent=4)
+        csv_data = pd.DataFrame(portfolio).to_csv(index=False).encode('utf-8')
+        
+        st.download_button(
+            label="💾 Download as JSON",
+            data=json_data,
+            file_name="my_portfolio.json",
+            mime="application/json"
+        )
+        
+        st.download_button(
+            label="📈 Download as CSV",
+            data=csv_data,
+            file_name="my_portfolio.csv",
+            mime="text/csv"
+        )
 
         price_data = yf.download(tickers, period="5d")
 
