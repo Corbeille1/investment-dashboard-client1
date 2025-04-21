@@ -70,9 +70,19 @@ st.title(f"🔒 {t['login']}")
 
 email_input = st.text_input(t['email'])
 password_input = st.text_input(t['password'], type="password")
+login_button = st.button("Access Dashboard")
 
-if email_input == EMAIL and password_input == PASSWORD:
-    st.success(t['success'])
+if login_button:
+    if email_input == EMAIL and password_input == PASSWORD:
+        st.success(t['success'])
+        show_dashboard = True
+    else:
+        st.error("❌ Invalid credentials. Please try again.")
+        show_dashboard = False
+ else:
+    show_dashboard = False
+
+ if show_dashboard:    
 
     portfolio = []  # ✅ Add this here
     
