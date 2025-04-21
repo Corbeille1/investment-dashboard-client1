@@ -83,24 +83,6 @@ if email_input == EMAIL and password_input == PASSWORD:
     shares = st.text_input("", "10, 5, 7")
     st.subheader(t['buy_prices'])
     buy_prices = st.text_input("", "145, 700, 380")
-
-    if st.button(t['track']):
-        tickers = [x.strip().upper() for x in tickers.split(",")]
-        shares = [int(x.strip()) for x in shares.split(",")]
-        buy_prices = [float(x.strip()) for x in buy_prices.split(",")]
-        
-        # 🚨 Validate input lengths
-        if not (len(tickers) == len(shares) == len(buy_prices)):
-          st.error("⚠️ The number of tickers, shares, and buy prices must match. Please double-check your entries.")
-          st.stop()
-        portfolio = []
-        for i in range(len(tickers)):
-            portfolio.append({
-                'ticker': tickers[i],
-                'shares': shares[i],
-                'buy_price': buy_prices[i]
-            })
-
     
     # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
     st.caption("Use this if you want to track existing portfolio.")
@@ -122,6 +104,24 @@ if email_input == EMAIL and password_input == PASSWORD:
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
+    if st.button(t['track']):
+        tickers = [x.strip().upper() for x in tickers.split(",")]
+        shares = [int(x.strip()) for x in shares.split(",")]
+        buy_prices = [float(x.strip()) for x in buy_prices.split(",")]
+        
+        # 🚨 Validate input lengths
+        if not (len(tickers) == len(shares) == len(buy_prices)):
+          st.error("⚠️ The number of tickers, shares, and buy prices must match. Please double-check your entries.")
+          st.stop()
+        portfolio = []
+        for i in range(len(tickers)):
+            portfolio.append({
+                'ticker': tickers[i],
+                'shares': shares[i],
+                'buy_price': buy_prices[i]
+            })
+
+    
     
     # --- POST-TRACKING UPLOAD (Merge another portfolio) ---
     st.caption("Use this if you want to add to your portfolio.")
