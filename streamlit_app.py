@@ -3,17 +3,22 @@ import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import json
+import os
 from datetime import datetime
 from fpdf import FPDF
+from io import BytesIO
 
-# ----- CONFIG -----
-st.set_page_config(page_title="Investment Dashboard", layout="wide")
-history_file_path = "performance_history.json"
+# --------------------------------------------
+# 🔧 PAGE SETTINGS
+# --------------------------------------------
+st.set_page_config(page_title="Your Investment Dashboard", layout="wide")
+st.markdown("<style>footer {visibility: hidden;}</style>", unsafe_allow_html=True)
 
-# ----- LANGUAGE SWITCH -----
-lang = st.sidebar.selectbox("Language / Langue / 언어", ["English", "Français", "한국어"])
+# --------------------------------------------
+# 🌐 LANGUAGES
+# --------------------------------------------
+lang = st.sidebar.selectbox("Language / 언어 / Langue", ["English", "Français", "한국어"])
 texts = {
     "English": {
         "login": "Login to Your Investment Dashboard",
@@ -29,7 +34,8 @@ texts = {
         "summary": "Portfolio Summary",
         "allocation": "Asset Allocation",
         "compare": "Portfolio vs. S&P 500",
-        "metrics": "Performance Metrics"
+        "metrics": "Performance Metrics",
+        "history": "📊 Historical Portfolio Performance"
     },
     "Français": {
         "login": "Connexion à votre tableau de bord d'investissement",
@@ -45,7 +51,8 @@ texts = {
         "summary": "Résumé du portefeuille",
         "allocation": "Répartition des actifs",
         "compare": "Portefeuille vs. S&P 500",
-        "metrics": "Indicateurs de performance"
+        "metrics": "Indicateurs de performance",
+        "history": "📊 Historique du portefeuille"
     },
     "한국어": {
         "login": "투자 대시보드에 로그인",
@@ -61,177 +68,181 @@ texts = {
         "summary": "포트폴리오 요약",
         "allocation": "자산 배분",
         "compare": "포트폴리오 vs. S&P 500",
-        "metrics": "성과 지표"
+        "metrics": "성과 지표",
+        "history": "📊 포트폴리오 히스토리"
     }
 }
 t = texts[lang]
 
-# ----- LOGIN -----
+# --------------------------------------------
+# 🔐 LOGIN SYSTEM
+# --------------------------------------------
 EMAIL = st.secrets.get("EMAIL", "amahali.we@gmail.com")
 PASSWORD = st.secrets.get("PASSWORD", "changeme")
 
-st.title(f"🔐 {t['login']}")
+st.title(f"🔒 {t['login']}")
+
+if 'show_dashboard' not in st.session_state:
+    st.session_state.show_dashboard = False
+
+if 'performance_history' not in st.session_state:
+    if os.path.exists("performance_history.json"):
+        with open("performance_history.json", "r") as f:
+            st.session_state.performance_history = json.load(f)
+    else:
+        st.session_state.performance_history = []
 
 email_input = st.text_input(t['email'])
 password_input = st.text_input(t['password'], type="password")
 login_button = st.button("Access Dashboard")
 
-if 'show_dashboard' not in st.session_state:
-    st.session_state.show_dashboard = False
-
 if login_button:
     if email_input == EMAIL and password_input == PASSWORD:
         st.session_state.show_dashboard = True
-        st.success(t['success'])
     else:
         st.error("❌ Invalid credentials. Please try again.")
 
-# ----- DASHBOARD START -----
+# --------------------------------------------
+# 📊 DASHBOARD UI
+# --------------------------------------------
 if st.session_state.show_dashboard:
-
-    if "performance_history" not in st.session_state:
-        if os.path.exists(history_file_path):
-            with open(history_file_path, "r") as f:
-                st.session_state.performance_history = json.load(f)
-        else:
-            st.session_state.performance_history = []
-
     st.title(f"📊 {t['title']}")
-    tickers = st.text_input(t['tickers'], "AAPL, TSLA, VOO")
-    shares = st.text_input(t['shares'], "10, 5, 7")
-    buy_prices = st.text_input(t['buy_prices'], "145, 700, 380")
+
+    uploaded_file = st.file_uploader("📂 Load portfolio (JSON or CSV)", type=["json", "csv"])
+    tickers = st.text_input(t['tickers'], st.session_state.get("tickers", "AAPL, TSLA, VOO"))
+    shares = st.text_input(t['shares'], st.session_state.get("shares", "10, 5, 7"))
+    buy_prices = st.text_input(t['buy_prices'], st.session_state.get("buy_prices", "145, 700, 380"))
+
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".json"):
+                data = json.load(uploaded_file)
+            else:
+                df_uploaded = pd.read_csv(uploaded_file)
+                data = df_uploaded.to_dict(orient="records")
+            tickers = ", ".join([x["ticker"] for x in data])
+            shares = ", ".join([str(x["shares"]) for x in data])
+            buy_prices = ", ".join([str(x["buy_price"]) for x in data])
+            st.success("✅ Portfolio loaded and fields filled!")
+        except Exception as e:
+            st.error(f"❌ Failed to load portfolio: {e}")
 
     if st.button(t['track']):
-        tickers = [x.strip().upper() for x in tickers.split(",")]
-        shares = [int(x.strip()) for x in shares.split(",")]
-        buy_prices = [float(x.strip()) for x in buy_prices.split(",")]
+        try:
+            tickers = [x.strip().upper() for x in tickers.split(",")]
+            shares = [int(x.strip()) for x in shares.split(",")]
+            buy_prices = [float(x.strip()) for x in buy_prices.split(",")]
 
-        if not (len(tickers) == len(shares) == len(buy_prices)):
-            st.error("⚠️ Ticker, share, and buy price counts must match.")
-            st.stop()
+            if not (len(tickers) == len(shares) == len(buy_prices)):
+                st.error("⚠️ The number of tickers, shares, and buy prices must match.")
+                st.stop()
 
-        portfolio = [
-            {"ticker": tickers[i], "shares": shares[i], "buy_price": buy_prices[i]}
-            for i in range(len(tickers))
-        ]
+            portfolio = []
+            for i in range(len(tickers)):
+                portfolio.append({
+                    'ticker': tickers[i],
+                    'shares': shares[i],
+                    'buy_price': buy_prices[i]
+                })
 
-        price_data = yf.download(tickers, period="1d")
-        if isinstance(price_data.columns, pd.MultiIndex):
-            data = price_data['Adj Close'].dropna().iloc[-1]
-        else:
-            data = pd.Series({tickers[0]: price_data['Adj Close'].dropna().iloc[-1]})
+            price_data = yf.download(tickers, period="5d")["Adj Close"].dropna().iloc[-1]
 
-        results = []
-        total_value = 0
-        total_cost = 0
+            results = []
+            total_value = 0
+            total_cost = 0
 
-        for item in portfolio:
-            ticker = item['ticker']
-            shares = item['shares']
-            buy_price = item['buy_price']
-            current_price = data[ticker]
-            value = shares * current_price
-            cost = shares * buy_price
-            pnl = value - cost
-            return_pct = (pnl / cost) * 100
+            for item in portfolio:
+                ticker = item["ticker"]
+                shares = item["shares"]
+                buy_price = item["buy_price"]
+                current_price = price_data[ticker]
+                value = shares * current_price
+                cost = shares * buy_price
+                pnl = value - cost
+                return_pct = (pnl / cost) * 100
 
-            total_value += value
-            total_cost += cost
+                results.append({
+                    "Ticker": ticker,
+                    "Shares": shares,
+                    "Buy Price": buy_price,
+                    "Current Price": round(current_price, 2),
+                    "Current Value": round(value, 2),
+                    "P&L": round(pnl, 2),
+                    "Return %": round(return_pct, 2)
+                })
 
-            results.append({
-                'Ticker': ticker,
-                'Shares': shares,
-                'Buy Price': buy_price,
-                'Current Price': round(current_price, 2),
-                'Current Value': round(value, 2),
-                'P&L': round(pnl, 2),
-                'Return %': round(return_pct, 2)
-            })
+                total_value += value
+                total_cost += cost
 
-        df = pd.DataFrame(results)
-        st.subheader(t['summary'])
-        st.dataframe(df)
+            df = pd.DataFrame(results)
+            st.subheader(t['summary'])
+            st.dataframe(df)
 
-        st.markdown(f"**Total Cost:** ${round(total_cost,2)}")
-        st.markdown(f"**Total Value:** ${round(total_value,2)}")
-        st.markdown(f"**Total P&L:** ${round(total_value - total_cost,2)}")
+            st.markdown(f"**Total Cost:** ${round(total_cost, 2)}")
+            st.markdown(f"**Total Value:** ${round(total_value, 2)}")
+            st.markdown(f"**Total P&L:** ${round(total_value - total_cost, 2)}")
 
-        # Save performance to history
-        today_str = datetime.today().strftime("%Y-%m-%d")
-        existing_dates = [entry["date"] for entry in st.session_state.performance_history]
-        if today_str not in existing_dates:
-            st.session_state.performance_history.append({
-                "date": today_str,
-                "total_value": round(total_value, 2),
-                "total_cost": round(total_cost, 2),
-                "pnl": round(total_value - total_cost, 2)
-            })
-            with open(history_file_path, "w") as f:
-                json.dump(st.session_state.performance_history, f, indent=4)
+            # Save daily performance
+            today = datetime.today().strftime("%Y-%m-%d")
+            if not any(row["date"] == today for row in st.session_state.performance_history):
+                st.session_state.performance_history.append({
+                    "date": today,
+                    "total_value": round(total_value, 2),
+                    "total_cost": round(total_cost, 2),
+                    "pnl": round(total_value - total_cost, 2)
+                })
+                with open("performance_history.json", "w") as f:
+                    json.dump(st.session_state.performance_history, f, indent=4)
 
-        # Allocation pie chart
-        st.subheader(t['allocation'])
-        fig1, ax1 = plt.subplots()
-        ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
-        st.pyplot(fig1)
+            # 📈 Charts
+            st.subheader(t['allocation'])
+            fig1, ax1 = plt.subplots()
+            ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
+            st.pyplot(fig1)
 
-        # Performance chart vs S&P 500
-        st.subheader(t['compare'])
-        start_date = "2023-01-01"
-        prices = pd.DataFrame()
-        for item in portfolio:
-            hist = yf.download(item['ticker'], start=start_date)
-            data_hist = hist['Adj Close'] if 'Adj Close' in hist else hist['Close']
-            prices[item['ticker']] = data_hist * item['shares']
+            st.subheader(t['compare'])
+            start_date = "2023-01-01"
+            prices = pd.DataFrame()
+            for item in portfolio:
+                hist = yf.download(item["ticker"], start=start_date)["Adj Close"]
+                prices[item["ticker"]] = hist * item["shares"]
 
-        portfolio_value = prices.sum(axis=1)
-        sp500 = yf.download("^GSPC", start=start_date)["Adj Close"]
-        sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
+            portfolio_value = prices.sum(axis=1)
+            sp500 = yf.download("^GSPC", start=start_date)["Adj Close"]
+            sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
 
-        fig2, ax2 = plt.subplots()
-        portfolio_value.plot(ax=ax2, label="Your Portfolio")
-        sp500.plot(ax=ax2, label="S&P 500", linestyle="--")
-        ax2.set_title("Portfolio vs. S&P 500")
-        ax2.legend()
-        ax2.grid(True)
-        st.pyplot(fig2)
+            fig2, ax2 = plt.subplots()
+            portfolio_value.plot(ax=ax2, label="Your Portfolio")
+            sp500.plot(ax=ax2, label="S&P 500", linestyle="--")
+            ax2.legend()
+            ax2.set_title("Portfolio vs. S&P 500")
+            ax2.grid(True)
+            st.pyplot(fig2)
 
-        # Performance metrics
-        st.subheader(t['metrics'])
-        returns = portfolio_value.pct_change().dropna()
-        sharpe_ratio = (returns.mean() / returns.std()) * np.sqrt(252)
-        roll_max = portfolio_value.cummax()
-        drawdown = (portfolio_value - roll_max) / roll_max
-        max_drawdown = drawdown.min()
-        days = (portfolio_value.index[-1] - portfolio_value.index[0]).days
-        cagr = (portfolio_value[-1] / portfolio_value[0])**(365.0/days) - 1
+            st.subheader(t['metrics'])
+            returns = portfolio_value.pct_change().dropna()
+            sharpe_ratio = (returns.mean() / returns.std()) * np.sqrt(252)
+            max_drawdown = ((portfolio_value / portfolio_value.cummax()) - 1).min()
+            days = (portfolio_value.index[-1] - portfolio_value.index[0]).days
+            cagr = (portfolio_value[-1] / portfolio_value[0])**(365.0/days) - 1
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
-        col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
-        col3.metric("CAGR", f"{cagr:.2%}")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+            col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
+            col3.metric("CAGR", f"{cagr:.2%}")
 
-        # Historical P&L chart
-        if st.session_state.performance_history:
+            # 🔁 History Chart
+            st.subheader(t["history"])
             history_df = pd.DataFrame(st.session_state.performance_history)
-            history_df["date"] = pd.to_datetime(history_df["date"])
-            history_df = history_df.sort_values("date")
-            history_df.set_index("date", inplace=True)
-
-            st.subheader("📊 Historical Portfolio Performance")
-            if all(col in history_df.columns for col in ["total_value", "pnl"]):
+            if not history_df.empty:
+                history_df["date"] = pd.to_datetime(history_df["date"])
+                history_df = history_df.sort_values("date").set_index("date")
                 st.line_chart(history_df[["total_value", "pnl"]])
                 st.dataframe(history_df)
-                csv_export = history_df.reset_index().to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="⬇️ Download History as CSV",
-                    data=csv_export,
-                    file_name="performance_history.csv",
-                    mime="text/csv"
-                )
+                csv_export = history_df.reset_index().to_csv(index=False).encode("utf-8")
+                st.download_button("⬇️ Download History CSV", data=csv_export, file_name="performance_history.csv")
             else:
-                st.warning("🚫 Missing 'total_value' or 'pnl' in history. Please track a portfolio again.")
-        else:
-            st.info("📬 No historical performance yet. Track a portfolio to begin.")
-else:
-    st.warning(t['warning'])
+                st.info("📭 No performance history yet.")
+
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
