@@ -94,6 +94,12 @@ if "history" not in st.session_state:
     else:
         st.session_state.history = []
 
+import os
+if os.path.exists(history_file_path):
+    st.markdown("### 📄 Raw Performance History JSON")
+    with open(history_file_path, "r") as f:
+        st.code(f.read(), language="json")
+
 # Show dashboard if logged in
 if st.session_state.show_dashboard:
     st.title(f"📊 {t['title']}")
@@ -296,6 +302,10 @@ if st.session_state.show_dashboard:
         cumulative_pnl = portfolio_value - portfolio_value.iloc[0]
         portfolio_value = prices.sum(axis=1)
         cumulative_pnl = (portfolio_value - total_cost)
+
+        st.write("🔍 History DF Columns:", history_df.columns.tolist())
+        st.dataframe(history_df)
+
 
         st.subheader("📈 Daily P&L Over Time")
         st.line_chart(daily_pnl)
@@ -503,7 +513,12 @@ if not history_df.empty:
     history_df.set_index("date", inplace=True)
 
     # Line chart for Total Value and P&L
-    st.line_chart(history_df[["total_value", "pnl"]])
+    st.subheader("📊 Historical Portfolio Performance")
+
+    if all(col in history_df.columns for col in ["total_value", "pnl"]):
+        st.line_chart(history_df[["total_value", "pnl"]])
+    else:
+        st.warning("🚫 Columns missing in history data. Please recheck saved JSON or initialization.")
 
     # Display table
     st.dataframe(history_df)
