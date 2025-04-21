@@ -218,7 +218,6 @@ if st.session_state['show_dashboard']:
         daily_pnl = portfolio_value.diff().fillna(0)
         cumulative_pnl = portfolio_value - portfolio_value.iloc[0]
         portfolio_value = prices.sum(axis=1)
-        returns = portfolio_value.pct_change().dropna()
         cumulative_pnl = (portfolio_value - total_cost)
 
         st.subheader("📈 Daily P&L Over Time")
@@ -226,16 +225,16 @@ if st.session_state['show_dashboard']:
 
         st.subheader("📊 Cumulative P&L Over Time")
         st.line_chart(cumulative_pnl)
-
+        
+        returns = portfolio_value.pct_change().dropna()
+        
         # --- Monthly Returns ---
         monthly_returns = portfolio_value.resample('M').ffill().pct_change().dropna()
-
         st.subheader("📆 Monthly Returns")
         st.bar_chart(monthly_returns)
 
         # --- Monthly Volatility (Optional) ---
         monthly_volatility = returns.resample('M').std()
-
         st.subheader("🌪️ Monthly Volatility")
         st.line_chart(monthly_volatility)
 
