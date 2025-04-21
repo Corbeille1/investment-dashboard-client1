@@ -272,46 +272,67 @@ if st.session_state['show_dashboard']:
         col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
         col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
         col3.metric("CAGR", f"{cagr:.2%}")
+
+        # Save all charts to PNG files
+        chart_paths = {}
         
-        class CleanPortfolioPDF(FPDF):
-            def header(self):
-                self.set_font('Helvetica', 'B', 16)
-                self.cell(0, 10, "Ko-nect Investment Portfolio Summary", ln=True, align='C')
-                self.set_font('Helvetica', '', 10)
-                self.cell(0, 10, f"Report generated on: {datetime.now().strftime('%Y-%m-%d')}", ln=True, align='C')
-                self.ln(5)
-            
-            def add_summary_block(self, total_value, pnl, sharpe, drawdown, cagr):
-                self.set_fill_color(240, 240, 240)
-                self.set_font("Helvetica", "B", 12)
-                self.cell(0, 8, "Portfolio Performance Overview", ln=True, fill=True)
-                self.set_font("Helvetica", "", 11)
-                self.cell(0, 8, f"Total Value: ${total_value:,.2f}", ln=True)
-                self.cell(0, 8, f"Profit / Loss: ${pnl:,.2f}", ln=True)
-                self.cell(0, 8, f"Sharpe Ratio: {sharpe:.2f}", ln=True)
-                self.cell(0, 8, f"Max Drawdown: {drawdown:.2%}", ln=True)
-                self.cell(0, 8, f"CAGR: {cagr:.2%}", ln=True)
-                self.ln(5)
-            def add_table(self, df):
-                self.set_font("Helvetica", "B", 10)
-                epw = self.w - 2 * self.l_margin
-                col_width = epw / len(df.columns)
-                for col in df.columns:
-                    self.cell(col_width, 8, col, border=1)
-                self.ln()
-                self.set_font("Helvetica", "", 9)
-                for _, row in df.iterrows():
-                    for item in row:
-                        text = f"{round(item, 2)}" if isinstance(item, float) else str(item)
-                        self.cell(col_width, 8, text, border=1)
-                    self.ln()
-        def generate_pdf(df, total_cost, total_value, pnl, sharpe, drawdown, cagr):
-            pdf = CleanPortfolioPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            pdf.add_page()
-            pdf.add_summary_block(total_value, pnl, sharpe, drawdown, cagr)
-            pdf.add_table(df)
-            return pdf.output(dest='S').encode('latin1')
+        # Pie chart
+        fig1, ax1 = plt.subplots()
+        ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
+        ax1.set_title("Asset Allocation", fontsize=10)
+        chart_paths['asset_allocation'] = "/tmp/asset_allocation.png"
+        fig1.savefig(chart_paths['asset_allocation'])
+
+        # Daily P&L
+        fig2, ax2 = plt.subplots()
+        daily_pnl.plot(ax=ax2)
+        ax2.set_title("Daily P&L Over Time", fontsize=10)
+        chart_paths['daily_pnl'] = "/tmp/daily_pnl.png"
+        fig2.savefig(chart_paths['daily_pnl'])
+
+        # Cumulative P&L
+        fig3, ax3 = plt.subplots()
+        cumulative_pnl.plot(ax=ax3)
+        ax3.set_title("Cumulative P&L Over Time", fontsize=10)
+        chart_paths['cumulative_pnl'] = "/tmp/cumulative_pnl.png"
+        fig3.savefig(chart_paths['cumulative_pnl'])
+
+        # Monthly Returns
+        fig4, ax4 = plt.subplots()
+        monthly_returns.plot(kind='bar', ax=ax4)
+        ax4.set_title("Monthly Returns", fontsize=10)
+        chart_paths['monthly_returns'] = "/tmp/monthly_returns.png"
+        fig4.savefig(chart_paths['monthly_returns'])
+
+        # Monthly Volatility
+        fig5, ax5 = plt.subplots()
+        monthly_volatility.plot(kind='bar', ax=ax5, color='orange')
+        ax5.set_title("Monthly Volatility", fontsize=10)
+        chart_paths['monthly_volatility'] = "/tmp/monthly_volatility.png"
+        fig5.savefig(chart_paths['monthly_volatility'])
+
+        # Portfolio vs S&P
+        fig6, ax6 = plt.subplots()
+        portfolio_value.plot(ax=ax6, label="Your Portfolio")
+        sp500.plot(ax=ax6, label="S&P 500", linestyle="--")
+        ax6.set_title("Portfolio vs. S&P 500", fontsize=10)
+        ax6.legend()
+        chart_paths['portfolio_vs_sp500'] = "/tmp/portfolio_vs_sp500.png"
+        fig6.savefig(chart_paths['portfolio_vs_sp500'])
+
+
+
+        # 📄 Full Styled PDF Export with Charts
+        pdf_data = generate_full_pdf(
+            df=df,
+            total_cost=total_cost,
+            total_value=total_value,
+            pnl=total_value - total_cost,
+            sharpe=sharpe_ratio,
+            drawdown=max_drawdown,
+            cagr=cagr,
+            chart_paths=chart_paths
+        )
 
             
         csv_data = df.to_csv(index=False).encode('utf-8')
@@ -322,7 +343,6 @@ if st.session_state['show_dashboard']:
             mime="text/csv"
         )
         
-        pdf_data = generate_pdf(df, total_cost, total_value, total_value - total_cost, sharpe_ratio, max_drawdown, cagr)
         st.download_button(
             label="📑 Download Portfolio PDF",
             data=pdf_data,
