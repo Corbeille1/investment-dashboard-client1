@@ -145,21 +145,6 @@ if email_input == EMAIL and password_input == PASSWORD:
         except Exception as e:
             st.error(f"❌ Failed to merge portfolio: {e}")
 
-    # -------- LOAD PORTFOLIO FROM FILE --------
-    uploaded_file = st.file_uploader("📂 Load a saved portfolio", type=["json", "csv"])
-    if uploaded_file:
-        try:
-            if uploaded_file.name.endswith(".json"):
-                portfolio = json.load(uploaded_file)
-            else:
-                df_uploaded = pd.read_csv(uploaded_file)
-                portfolio = df_uploaded.to_dict(orient="records")
-            st.success("✅ Portfolio loaded successfully!")
-            st.write(pd.DataFrame(portfolio))
-        except Exception as e:
-            st.error(f"❌ Failed to load portfolio: {e}")
-            st.stop()
-
     # -------- SAVE PORTFOLIO --------
     if portfolio:
         json_data = json.dumps(portfolio, indent=4)
