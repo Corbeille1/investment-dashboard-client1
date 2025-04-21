@@ -36,11 +36,10 @@ t = texts[lang]
 EMAIL = st.secrets.get("EMAIL", "amahali.we@gmail.com")
 PASSWORD = st.secrets.get("PASSWORD", "changeme")
 
-# Initialize login state if not set
+# Initialize session state
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# --- LOGGED OUT VIEW ---
 if not st.session_state.logged_in:
     st.title(f"🔒 {t['login']}")
 
@@ -52,18 +51,17 @@ if not st.session_state.logged_in:
     if submit_login:
         if email_input.strip().lower() == EMAIL.lower() and password_input.strip() == PASSWORD:
             st.session_state.logged_in = True
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid credentials. Please try again.")
     st.stop()
 
-# --- LOGGED IN VIEW ---
-# Add a logout button in the sidebar or top
+# LOGGED IN: Add Logout in Sidebar
 with st.sidebar:
     st.markdown("### 👤 Account")
     if st.button("🚪 Log out"):
         st.session_state.logged_in = False
-        st.experimental_rerun()
+        st.rerun()
 
 # Show dashboard if logged in
 if st.session_state['show_dashboard']:
