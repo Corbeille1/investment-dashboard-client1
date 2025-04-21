@@ -76,14 +76,6 @@ if email_input == EMAIL and password_input == PASSWORD:
 
     portfolio = []  # ✅ Add this here
     
-    st.title(f"📊 {t['title']}")
-    st.subheader(t['tickers'])
-    tickers = st.text_input("", "AAPL, TSLA, VOO")
-    st.subheader(t['shares'])
-    shares = st.text_input("", "10, 5, 7")
-    st.subheader(t['buy_prices'])
-    buy_prices = st.text_input("", "145, 700, 380")
-    
     # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
     st.caption("Use this if you want to track existing portfolio.")
     uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
@@ -104,6 +96,15 @@ if email_input == EMAIL and password_input == PASSWORD:
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
+    
+    st.title(f"📊 {t['title']}")
+    st.subheader(t['tickers'])
+    tickers = st.text_input("", "AAPL, TSLA, VOO")
+    st.subheader(t['shares'])
+    shares = st.text_input("", "10, 5, 7")
+    st.subheader(t['buy_prices'])
+    buy_prices = st.text_input("", "145, 700, 380")
+    
     if st.button(t['track']):
         tickers = [x.strip().upper() for x in tickers.split(",")]
         shares = [int(x.strip()) for x in shares.split(",")]
