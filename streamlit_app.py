@@ -100,7 +100,16 @@ if email_input == EMAIL and password_input == PASSWORD:
         
         if isinstance(price_data.columns, pd.MultiIndex):
             try:
-                data = price_data['Adj Close'].iloc[-1]
+                if 'Adj Close' in price_data.columns:
+                   data = price_data['Adj Close'].dropna().iloc[-1]
+                elif 'Close' in price_data.columns:
+                    data = price_data['Close'].dropna().iloc[-1]
+                else:
+                    st.error("❌ Neither 'Adj Close' nor 'Close' was found in the price data.")
+                    st.stop()
+            except Exception as e:
+                st.error(f"❌ Could not fetch latest price. Details: {e}")
+                st.stop()
             except KeyError as e:
                 st.error(f"❌ 'Adj Close' not found. Problem likely with: {str(e)} — check ticker symbols or try again later.")
                 st.stop()
