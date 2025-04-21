@@ -176,17 +176,11 @@ if st.session_state.show_dashboard:
                 st.error("❌ Price column missing. Please check the ticker.")
                 st.stop()
 
-        if 'total_value' in locals() and 'total_cost' in locals():
-            st.markdown(f"**Total P&L:** ${round(total_value - total_cost, 2)}")
-
         results = []
         total_value = 0
         total_cost = 0
 
         import datetime
-        
-        if 'history' not in st.session_state:
-            st.session_state.history = []
         
         today = datetime.date.today().isoformat()
         daily_pnl = round(total_value - total_cost, 2)
