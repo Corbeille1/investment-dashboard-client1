@@ -96,12 +96,23 @@ if email_input == EMAIL and password_input == PASSWORD:
 
         price_data = yf.download(tickers, period="1d")
 
-        if 'Adj Close' in price_data.columns:
-            data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
-        elif isinstance(price_data.columns, pd.MultiIndex):
-            data = price_data['Adj Close'].iloc[-1]
+        # 🛡 Handle unexpected structure
+        
+        if isinstance(price_data.columns, pd.MultiIndex):
+            try:
+                data = price_data['Adj Close'].iloc[-1]
+            except KeyError:
+                st.error("❌ 'Adj Close' data not found for one or more tickers. Please double-check the symbols.")
+                st.stop()
+        elif 'Adj Close' in price_data.columns:
+            # Single ticker
+            try:
+                data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
+            except Exception as e:
+                st.error(f"❌ Failed to extract price data: {e}")
+                st.stop()
         else:
-            st.error("⚠️ 'Adj Close' not found in the data. Check the ticker symbols.")
+            st.error("❌ Price data format not recognized. Check your tickers.")
             st.stop()
 
         results = []
