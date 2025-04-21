@@ -80,10 +80,10 @@ if 'show_dashboard' not in st.session_state:
 if login_button:
     if email_input == EMAIL and password_input == PASSWORD:
         st.success(t['success'])
-        show_dashboard = True
+        st.session_state['show_dashboard'] = True  # ✅ Correct this line
     else:
         st.error("❌ Invalid credentials. Please try again.")
-        show_dashboard = False
+        st.session_state['show_dashboard'] = False  # ✅ Also update session state
 
 # Show dashboard if logged in
 if st.session_state['show_dashboard']:    
