@@ -85,7 +85,11 @@ if email_input == EMAIL and password_input == PASSWORD:
         tickers = [x.strip().upper() for x in tickers.split(",")]
         shares = [int(x.strip()) for x in shares.split(",")]
         buy_prices = [float(x.strip()) for x in buy_prices.split(",")]
-
+        
+        # 🚨 Validate input lengths
+        if not (len(tickers) == len(shares) == len(buy_prices)):
+          st.error("⚠️ The number of tickers, shares, and buy prices must match. Please double-check your entries.")
+          st.stop()
         portfolio = []
         for i in range(len(tickers)):
             portfolio.append({
