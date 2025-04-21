@@ -80,24 +80,41 @@ if st.session_state.show_dashboard:
     buy_prices = st.text_input(t["buy_prices"], st.session_state.get("buy_prices", "145, 700, 380"))
 
     if uploaded_file:
-        try:
-            if uploaded_file.name.endswith(".json"):
-                data = json.load(uploaded_file)
+    try:
+        if uploaded_file.name.endswith(".json"):
+            raw = json.load(uploaded_file)
+
+            # 🔒 Add validation check
+            if isinstance(raw, list) and isinstance(raw[0], dict):
+                data = raw
             else:
-                df_uploaded = pd.read_csv(uploaded_file)
-                data = df_uploaded.to_dict(orient="records")
+                st.error("❌ JSON format must be a list of objects like [{'ticker': 'AAPL', 'shares': 10, 'buy_price': 145}]")
+                st.stop()
 
-            # Fill fields
-            tickers = ", ".join([x["ticker"] for x in data])
-            shares = ", ".join([str(x["shares"]) for x in data])
-            buy_prices = ", ".join([str(x["buy_price"]) for x in data])
+        else:
+            df_uploaded = pd.read_csv(uploaded_file)
+            data = df_uploaded.to_dict(orient="records")
 
-            st.session_state["tickers"] = tickers
-            st.session_state["shares"] = shares
-            st.session_state["buy_prices"] = buy_prices
-            st.success("✅ Portfolio loaded!")
-        except Exception as e:
-            st.error(f"❌ Failed to load portfolio: {e}")
+        # Extract clean fields
+        tickers = ", ".join([x["ticker"] for x in data])
+        shares = ", ".join([str(x["shares"]) for x in data])
+        buy_prices = ", ".join([str(x["buy_price"]) for x in data])
+
+        st.session_state["tickers"] = tickers
+        st.session_state["shares"] = shares
+        st.session_state["buy_prices"] = buy_prices
+
+        st.success("✅ Portfolio loaded and fields filled!")
+
+    except Exception as e:
+        st.error(f"❌ Failed to load file: {e}")
+    [
+        { "ticker": "AAPL", "shares": 10, "buy_price": 145 },
+        { "ticker": "TSLA", "shares": 5, "buy_price": 700 },
+        { "ticker": "VOO", "shares": 7, "buy_price": 380 }
+    ]
+
+
 
     if st.button(t["track"]):
         try:
