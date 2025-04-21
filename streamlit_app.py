@@ -277,9 +277,8 @@ if st.session_state['show_dashboard']:
             pdf.add_page()
             pdf.set_font("Arial", size=12)
             
-            pdf.cell(200, 10, txt="📊 Portfolio Summary", ln=True, align="C")
+            pdf.cell(200, 10, txt="Portfolio Summary", ln=True, align="C")
             pdf.ln(10)
-            
             for i, row in df.iterrows():
                 line = f"{row['Ticker']}: {row['Shares']} shares | Buy: {row['Buy Price']} | Now: {row['Current Price']} | P&L: {row['P&L']}"
                 pdf.cell(200, 10, txt=line, ln=True)
@@ -287,12 +286,14 @@ if st.session_state['show_dashboard']:
             pdf.cell(200, 10, txt=f"Total Cost: ${total_cost:.2f}", ln=True)
             pdf.cell(200, 10, txt=f"Total Value: ${total_value:.2f}", ln=True)
             pdf.cell(200, 10, txt=f"Total P&L: ${pnl:.2f}", ln=True)
+            
             pdf.ln(10)
             pdf.cell(200, 10, txt=f"Sharpe Ratio: {sharpe_ratio:.2f}", ln=True)
             pdf.cell(200, 10, txt=f"Max Drawdown: {max_drawdown:.2%}", ln=True)
             pdf.cell(200, 10, txt=f"CAGR: {cagr:.2%}", ln=True)
             
-            return pdf.output(dest='S').encode('latin1')
+            return pdf.output(dest='S').encode('latin-1', 'replace')
+
             
         csv_data = df.to_csv(index=False).encode('utf-8')
         st.download_button(
