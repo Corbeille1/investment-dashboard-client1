@@ -101,8 +101,8 @@ if email_input == EMAIL and password_input == PASSWORD:
         if isinstance(price_data.columns, pd.MultiIndex):
             try:
                 data = price_data['Adj Close'].iloc[-1]
-            except KeyError:
-                st.error(f"❌ 'Adj Close' not found. Problem likely with: `{e}` — check ticker symbols or try again later.")
+            except KeyError as e:
+                st.error(f"❌ 'Adj Close' not found. Problem likely with: {str(e)} — check ticker symbols or try again later.")
                 st.stop()
         elif 'Adj Close' in price_data.columns:
             # Single ticker
