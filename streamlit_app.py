@@ -6,6 +6,9 @@ import numpy as np
 import json
 from fpdf import FPDF
 from datetime import datetime
+import os
+
+history_file_path = "performance_history.json"
 
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
@@ -75,6 +78,13 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.session_state.show_dashboard = False
         st.rerun()
+
+if "history" not in st.session_state:
+    if os.path.exists(history_file_path):
+        with open(history_file_path, "r") as f:
+            st.session_state.history = json.load(f)
+    else:
+        st.session_state.history = []
 
 # Show dashboard if logged in
 if st.session_state.show_dashboard:
@@ -283,6 +293,19 @@ if st.session_state.show_dashboard:
         st.line_chart(cumulative_pnl)
         
         returns = portfolio_value.pct_change().dropna()
+        
+        # ✅ Save today's performance
+        today_str = datetime.today().strftime("%Y-%m-%d")
+        existing_dates = [entry["date"] for entry in st.session_state.history]
+
+        if today_str not in existing_dates:
+            st.session_state.history.append({
+                "date": today_str,
+                "total_value": total_value,
+                "total_cost": total_cost
+            })
+        with open(history_file_path, "w") as f:
+            json.dump(st.session_state.history, f, indent=4)
         
         # --- Monthly Returns ---
         monthly_returns = portfolio_value.resample('M').ffill().pct_change().dropna()
