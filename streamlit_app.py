@@ -73,7 +73,7 @@ with st.sidebar:
 
 # Show dashboard if logged in
 if st.session_state.show_dashboard:
-    st.title(f"{💰t['title']}")
+    st.title(f"💰 {t['title']}")
 
     portfolio = []
 
