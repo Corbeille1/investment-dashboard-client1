@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
