@@ -102,7 +102,7 @@ if email_input == EMAIL and password_input == PASSWORD:
             try:
                 data = price_data['Adj Close'].iloc[-1]
             except KeyError:
-                st.error("❌ 'Adj Close' data not found for one or more tickers. Please double-check the symbols.")
+                st.error(f"❌ 'Adj Close' not found. Problem likely with: `{e}` — check ticker symbols or try again later.")
                 st.stop()
         elif 'Adj Close' in price_data.columns:
             # Single ticker
