@@ -145,7 +145,16 @@ if st.session_state.show_dashboard:
                     'buy_price': buy_prices[i]
                 })
 
-            price_data = yf.download(tickers, period="5d")["Adj Close"].dropna().iloc[-1]
+            price_data = yf.download(tickers, period="5d", group_by='ticker')
+
+            # Handle single ticker edge case
+            if isinstance(price_data.columns, pd.MultiIndex):
+                price_row = {ticker: price_data[ticker]["Adj Close"].dropna().iloc[-1] for ticker in tickers}
+            else:
+                price_row = {tickers[0]: price_data["Adj Close"].dropna().iloc[-1]}
+
+            price_row = pd.Series(price_row)
+
 
             results = []
             total_value = 0
@@ -155,7 +164,7 @@ if st.session_state.show_dashboard:
                 ticker = item["ticker"]
                 shares = item["shares"]
                 buy_price = item["buy_price"]
-                current_price = price_data[ticker]
+                current_price = price_row[ticker]
                 value = shares * current_price
                 cost = shares * buy_price
                 pnl = value - cost
