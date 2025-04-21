@@ -84,6 +84,8 @@ if login_button:
     else:
         st.error("❌ Invalid credentials. Please try again.")
         st.session_state['show_dashboard'] = False  # ✅ Also update session state
+st.write("DEBUG Email:", repr(email_input))
+st.write("DEBUG Password:", repr(password_input))
 
 # Show dashboard if logged in
 if st.session_state['show_dashboard']:    
