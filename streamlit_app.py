@@ -111,6 +111,8 @@ if email_input == EMAIL and password_input == PASSWORD:
         try:
             if uploaded_file_post.name.endswith(".json"):
                 additional_portfolio = json.load(uploaded_file_post)
+                for item in additional_portfolio:
+                    item['ticker'] = item['ticker'].strip().upper()
             else:
                 df_extra = pd.read_csv(uploaded_file_post)
                 additional_portfolio = df_extra.to_dict(orient="records")
@@ -184,7 +186,11 @@ if email_input == EMAIL and password_input == PASSWORD:
             ticker = item['ticker']
             shares = item['shares']
             buy_price = item['buy_price']
-            current_price = data[ticker]
+            try:
+                current_price = data[ticker]
+            except KeyError:
+                st.error(f"❌ Price for `{ticker}` not found. Please check the ticker symbol.")
+                st.stop()
             value = shares * current_price
             cost = shares * buy_price
             pnl = value - cost
