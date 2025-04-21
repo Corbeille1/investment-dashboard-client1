@@ -4,6 +4,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+from fpdf import FPDF
 
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
@@ -270,4 +271,43 @@ if st.session_state['show_dashboard']:
         col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
         col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
         col3.metric("CAGR", f"{cagr:.2%}")
+        
+        def generate_pdf(df, total_cost, total_value, pnl, sharpe_ratio, max_drawdown, cagr):
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            
+            pdf.cell(200, 10, txt="📊 Portfolio Summary", ln=True, align="C")
+            pdf.ln(10)
+            
+            for i, row in df.iterrows():
+                line = f"{row['Ticker']}: {row['Shares']} shares | Buy: {row['Buy Price']} | Now: {row['Current Price']} | P&L: {row['P&L']}"
+                pdf.cell(200, 10, txt=line, ln=True)
+            pdf.ln(10)
+            pdf.cell(200, 10, txt=f"Total Cost: ${total_cost:.2f}", ln=True)
+            pdf.cell(200, 10, txt=f"Total Value: ${total_value:.2f}", ln=True)
+            pdf.cell(200, 10, txt=f"Total P&L: ${pnl:.2f}", ln=True)
+            pdf.ln(10)
+            pdf.cell(200, 10, txt=f"Sharpe Ratio: {sharpe_ratio:.2f}", ln=True)
+            pdf.cell(200, 10, txt=f"Max Drawdown: {max_drawdown:.2%}", ln=True)
+            pdf.cell(200, 10, txt=f"CAGR: {cagr:.2%}", ln=True)
+            
+            return pdf.output(dest='S').encode('latin1')
+            
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📄 Download Portfolio CSV",
+            data=csv_data,
+            file_name="portfolio_summary.csv",
+            mime="text/csv"
+        )
+        
+        pdf_data = generate_pdf(df, total_cost, total_value, total_value - total_cost, sharpe_ratio, max_drawdown, cagr)
+        st.download_button(
+            label="📑 Download Portfolio PDF",
+            data=pdf_data,
+            file_name="portfolio_summary.pdf",
+            mime="application/pdf"
+        )
+
 
