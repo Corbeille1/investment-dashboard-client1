@@ -17,6 +17,10 @@ if 'logged_in' not in st.session_state:
 if 'show_dashboard' not in st.session_state:
     st.session_state.show_dashboard = False
 
+# --- Session storage for daily performance ---
+if "performance_history" not in st.session_state:
+    st.session_state.performance_history = []
+
 # --- LANGUAGE SWITCH ---
 lang = st.sidebar.selectbox("Language / 언어 / Langue", ["English", "Français", "한국어"])
 texts = {
@@ -205,6 +209,20 @@ if st.session_state.show_dashboard:
             })
 
         df = pd.DataFrame(results)
+        from datetime import datetime
+
+        # Track today’s performance
+        today = datetime.today().strftime("%Y-%m-%d")
+
+        # Avoid duplicate entry for the same date
+        if not any(row["date"] == today for row in st.session_state.performance_history):
+            st.session_state.performance_history.append({
+                "date": today,
+                "total_value": total_value,
+                "total_cost": total_cost,
+                "pnl": total_value - total_cost
+            })
+
         st.subheader(t['summary'])
         st.dataframe(df)
 
@@ -419,5 +437,33 @@ if st.session_state.show_dashboard:
             file_name="portfolio_summary.pdf",
             mime="application/pdf"
         )
+
+st.markdown(f"**Total P&L:** ${round(total_value - total_cost,2)}")
+# --- Historical Performance Tracker ---
+st.subheader("📊 Historical Portfolio Performance")
+
+history_df = pd.DataFrame(st.session_state.performance_history)
+
+if not history_df.empty:
+    history_df["date"] = pd.to_datetime(history_df["date"])
+    history_df = history_df.sort_values("date")
+    history_df.set_index("date", inplace=True)
+
+    # Line chart for Total Value and P&L
+    st.line_chart(history_df[["total_value", "pnl"]])
+
+    # Display table
+    st.dataframe(history_df)
+
+    # Export CSV
+    csv_export = history_df.reset_index().to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="⬇️ Download History as CSV",
+        data=csv_export,
+        file_name="performance_history.csv",
+        mime="text/csv"
+    )
+else:
+    st.info("📭 No historical performance yet. Track a portfolio to begin.")
 
 
