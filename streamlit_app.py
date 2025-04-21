@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 from fpdf import FPDF
+from datetime import datetime
 
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
@@ -272,27 +273,45 @@ if st.session_state['show_dashboard']:
         col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
         col3.metric("CAGR", f"{cagr:.2%}")
         
-        def generate_pdf(df, total_cost, total_value, pnl, sharpe_ratio, max_drawdown, cagr):
-            pdf = FPDF()
+        class CleanPortfolioPDF(FPDF):
+            def header(self):
+                self.set_font('Helvetica', 'B', 16)
+                self.cell(0, 10, "Ko-nect Investment Portfolio Summary", ln=True, align='C')
+                self.set_font('Helvetica', '', 10)
+                self.cell(0, 10, f"Report generated on: {datetime.now().strftime('%Y-%m-%d')}", ln=True, align='C')
+                self.ln(5)
+            
+            def add_summary_block(self, total_value, pnl, sharpe, drawdown, cagr):
+                self.set_fill_color(240, 240, 240)
+                self.set_font("Helvetica", "B", 12)
+                self.cell(0, 8, "Portfolio Performance Overview", ln=True, fill=True)
+                self.set_font("Helvetica", "", 11)
+                self.cell(0, 8, f"Total Value: ${total_value:,.2f}", ln=True)
+                self.cell(0, 8, f"Profit / Loss: ${pnl:,.2f}", ln=True)
+                self.cell(0, 8, f"Sharpe Ratio: {sharpe:.2f}", ln=True)
+                self.cell(0, 8, f"Max Drawdown: {drawdown:.2%}", ln=True)
+                self.cell(0, 8, f"CAGR: {cagr:.2%}", ln=True)
+                self.ln(5)
+            def add_table(self, df):
+                self.set_font("Helvetica", "B", 10)
+                epw = self.w - 2 * self.l_margin
+                col_width = epw / len(df.columns)
+                for col in df.columns:
+                    self.cell(col_width, 8, col, border=1)
+                self.ln()
+                self.set_font("Helvetica", "", 9)
+                for _, row in df.iterrows():
+                    for item in row:
+                        text = f"{round(item, 2)}" if isinstance(item, float) else str(item)
+                        self.cell(col_width, 8, text, border=1)
+                    self.ln()
+        def generate_pdf(df, total_cost, total_value, pnl, sharpe, drawdown, cagr):
+            pdf = CleanPortfolioPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            
-            pdf.cell(200, 10, txt="Portfolio Summary", ln=True, align="C")
-            pdf.ln(10)
-            for i, row in df.iterrows():
-                line = f"{row['Ticker']}: {row['Shares']} shares | Buy: {row['Buy Price']} | Now: {row['Current Price']} | P&L: {row['P&L']}"
-                pdf.cell(200, 10, txt=line, ln=True)
-            pdf.ln(10)
-            pdf.cell(200, 10, txt=f"Total Cost: ${total_cost:.2f}", ln=True)
-            pdf.cell(200, 10, txt=f"Total Value: ${total_value:.2f}", ln=True)
-            pdf.cell(200, 10, txt=f"Total P&L: ${pnl:.2f}", ln=True)
-            
-            pdf.ln(10)
-            pdf.cell(200, 10, txt=f"Sharpe Ratio: {sharpe_ratio:.2f}", ln=True)
-            pdf.cell(200, 10, txt=f"Max Drawdown: {max_drawdown:.2%}", ln=True)
-            pdf.cell(200, 10, txt=f"CAGR: {cagr:.2%}", ln=True)
-            
-            return pdf.output(dest='S').encode('latin-1', 'replace')
+            pdf.add_summary_block(total_value, pnl, sharpe, drawdown, cagr)
+            pdf.add_table(df)
+            return pdf.output(dest='S').encode('latin1')
 
             
         csv_data = df.to_csv(index=False).encode('utf-8')
