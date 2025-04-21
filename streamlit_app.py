@@ -134,10 +134,24 @@ if st.session_state['show_dashboard']:
 
         # Handle single vs. multi-ticker
         if isinstance(price_data.columns, pd.MultiIndex):
-            data = price_data['Adj Close'].dropna().iloc[-1]
+            if 'Adj Close' in price_data.columns:
+                data = price_data['Adj Close'].dropna().iloc[-1]
+            elif 'Close' in price_data.columns:
+                data = price_data['Close'].dropna().iloc[-1]
+            else:
+                st.error("❌ Neither 'Adj Close' nor 'Close' was found in the price data.")
+                st.stop()
         else:
-            ticker = portfolio[0]['ticker']
-            data = pd.Series({ticker: price_data['Adj Close'].dropna().iloc[-1]})
+            # Single-ticker fallback
+            if 'Adj Close' in price_data.columns:
+                ticker = [item['ticker'] for item in portfolio][0]
+                data = pd.Series({ticker: price_data['Adj Close'].dropna().iloc[-1]})
+            elif 'Close' in price_data.columns:
+                ticker = [item['ticker'] for item in portfolio][0]
+                data = pd.Series({ticker: price_data['Close'].dropna().iloc[-1]})
+            else:
+                st.error("❌ Price column missing. Please check the ticker.")
+                st.stop()
 
         results = []
         total_value = 0
