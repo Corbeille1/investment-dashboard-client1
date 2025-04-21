@@ -10,6 +10,13 @@ from datetime import datetime
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
 
+# --- Initialize session keys ---
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+if 'show_dashboard' not in st.session_state:
+    st.session_state.show_dashboard = False
+
 # --- LANGUAGE SWITCH ---
 lang = st.sidebar.selectbox("Language / 언어 / Langue", ["English", "Français", "한국어"])
 texts = {
@@ -51,6 +58,7 @@ if not st.session_state.logged_in:
     if submit_login:
         if email_input.strip().lower() == EMAIL.lower() and password_input.strip() == PASSWORD:
             st.session_state.logged_in = True
+            st.session_state.show_dashboard = True
             st.rerun()
         else:
             st.error("❌ Invalid credentials. Please try again.")
@@ -61,10 +69,11 @@ with st.sidebar:
     st.markdown("### 👤 Account")
     if st.button("🚪 Log out"):
         st.session_state.logged_in = False
+        st.session_state.show_dashboard = False
         st.rerun()
 
 # Show dashboard if logged in
-if st.session_state['show_dashboard']:
+if st.session_state.show_dashboard:
     st.title(f"📊 {t['title']}")
 
     portfolio = []
