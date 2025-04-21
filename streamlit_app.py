@@ -214,6 +214,18 @@ if st.session_state['show_dashboard']:
             prices[ticker] = data_hist * shares
 
         portfolio_value = prices.sum(axis=1)
+        # --- Daily and Cumulative P&L ---
+        daily_pnl = portfolio_value.diff().fillna(0)
+        cumulative_pnl = portfolio_value - portfolio_value.iloc[0]
+
+        st.subheader("📈 Daily P&L Over Time")
+        st.line_chart(daily_pnl)
+
+        st.subheader("📊 Cumulative P&L Over Time")
+        st.line_chart(cumulative_pnl)
+
+        # --- Compare to Benchmark (S&P 500) ---
+        st.subheader(t['compare'])
         sp500_data = yf.download("^GSPC", start=start_date)
         if 'Adj Close' in sp500_data:
             sp500 = sp500_data['Adj Close']
