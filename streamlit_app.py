@@ -79,9 +79,11 @@ if email_input == EMAIL and password_input == PASSWORD:
         try:
             if uploaded_file.name.endswith(".json"):
                 portfolio_loaded = json.load(uploaded_file)
-        else:
-            df_uploaded = pd.read_csv(uploaded_file)
-            portfolio_loaded = df_uploaded.to_dict(orient="records")
+            elif uploaded_file.name.endswith(".csv"):
+                df_uploaded = pd.read_csv(uploaded_file)
+                portfolio_loaded = df_uploaded.to_dict(orient="records")
+            else:
+                raise ValueError("Unsupported file format")
 
         # Auto-fill the inputs
         tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
@@ -89,6 +91,7 @@ if email_input == EMAIL and password_input == PASSWORD:
         buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
         
         st.success("✅ Portfolio loaded and fields pre-filled!")
+        
     except Exception as e:
         st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
