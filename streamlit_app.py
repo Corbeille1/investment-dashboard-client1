@@ -91,6 +91,7 @@ if "history" not in st.session_state:
     if os.path.exists(history_file_path):
         with open(history_file_path, "r") as f:
             st.session_state.history = json.load(f)
+            history_df = pd.DataFrame(st.session_state.history)
     else:
         st.session_state.history = []
 
@@ -305,6 +306,10 @@ if st.session_state.show_dashboard:
 
         st.write("🔍 History DF Columns:", history_df.columns.tolist())
         st.dataframe(history_df)
+
+        if not history_df.empty:
+            st.write("🔍 History DF Columns:", history_df.columns.tolist())
+
 
 
         st.subheader("📈 Daily P&L Over Time")
