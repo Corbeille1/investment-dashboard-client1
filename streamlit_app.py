@@ -176,9 +176,31 @@ if st.session_state.show_dashboard:
                 st.error("❌ Price column missing. Please check the ticker.")
                 st.stop()
 
+        if 'total_value' in locals() and 'total_cost' in locals():
+            st.markdown(f"**Total P&L:** ${round(total_value - total_cost, 2)}")
+
         results = []
         total_value = 0
         total_cost = 0
+
+        import datetime
+        
+        if 'history' not in st.session_state:
+            st.session_state.history = []
+        
+        today = datetime.date.today().isoformat()
+        daily_pnl = round(total_value - total_cost, 2)
+        
+        # Prevent duplicates
+        existing_dates = [entry["date"] for entry in st.session_state.history]
+        if today not in existing_dates:
+            st.session_state.history.append({
+                "date": today,
+                "value": round(total_value, 2),
+                "cost": round(total_cost, 2),
+                "pnl": daily_pnl
+            })
+
 
         for item in portfolio:
             ticker = item['ticker']
@@ -466,4 +488,14 @@ if not history_df.empty:
 else:
     st.info("📭 No historical performance yet. Track a portfolio to begin.")
 
+import pandas as pd
+
+history_df = pd.DataFrame(st.session_state.history)
+
+if not history_df.empty:
+    st.subheader("📆 Portfolio Daily Performance History")
+    st.line_chart(history_df.set_index("date")[["pnl"]])
+
+    csv_data = history_df.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Download P&L History CSV", data=csv_data, file_name="daily_pnl_history.csv", mime="text/csv")
 
