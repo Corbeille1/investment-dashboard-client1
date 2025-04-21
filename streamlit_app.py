@@ -128,11 +128,11 @@ if email_input == EMAIL and password_input == PASSWORD:
                 df_extra = pd.read_csv(uploaded_file_post)
                 additional_portfolio = df_extra.to_dict(orient="records")
 
-        # Merge with existing portfolio
-        portfolio.extend(additional_portfolio)
-        st.success("✅ Additional portfolio merged successfully!")
-    except Exception as e:
-        st.error(f"❌ Failed to merge portfolio: {e}")
+            # Merge with existing portfolio
+            portfolio.extend(additional_portfolio)
+            st.success("✅ Additional portfolio merged successfully!")
+        except Exception as e:
+            st.error(f"❌ Failed to merge portfolio: {e}")
 
     # -------- LOAD PORTFOLIO FROM FILE --------
     uploaded_file = st.file_uploader("📂 Load a saved portfolio", type=["json", "csv"])
