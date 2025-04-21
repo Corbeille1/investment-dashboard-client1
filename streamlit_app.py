@@ -74,7 +74,6 @@ if email_input == EMAIL and password_input == PASSWORD:
     st.success(t['success'])
 
     st.title(f"📊 {t['title']}")
-
     st.subheader(t['tickers'])
     tickers = st.text_input("", "AAPL, TSLA, VOO")
     st.subheader(t['shares'])
@@ -94,90 +93,88 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'shares': shares[i],
                 'buy_price': buy_prices[i]
             })
-price_data = yf.download(tickers, period="1d")
 
-# Handle both single and multi-ticker downloads
-if isinstance(price_data.columns, pd.MultiIndex):
-    data = price_data['Adj Close'].iloc[-1]
-else:
-    data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
+        price_data = yf.download(tickers, period="1d")
 
-# ✅ These lines must NOT be indented
-results = []
-total_value = 0
-total_cost = 0
+        if isinstance(price_data.columns, pd.MultiIndex):
+            data = price_data['Adj Close'].iloc[-1]
+        else:
+            data = pd.Series({tickers[0]: price_data['Adj Close'].iloc[-1]})
 
-# This too — no extra spaces or tabs before it
-for item in portfolio:
-    ticker = item['ticker']
-    shares = item['shares']
-    buy_price = item['buy_price']
-    current_price = data[ticker]
-    value = shares * current_price
-    cost = shares * buy_price
-    pnl = value - cost
-    return_pct = (pnl / cost) * 100
+        results = []
+        total_value = 0
+        total_cost = 0
 
-    total_value += value
-    total_cost += cost
+        for item in portfolio:
+            ticker = item['ticker']
+            shares = item['shares']
+            buy_price = item['buy_price']
+            current_price = data[ticker]
+            value = shares * current_price
+            cost = shares * buy_price
+            pnl = value - cost
+            return_pct = (pnl / cost) * 100
 
-    results.append({
-        'Ticker': ticker,
-        'Shares': shares,
-        'Buy Price': buy_price,
-        'Current Price': round(current_price, 2),
-        'Current Value': round(value, 2),
-        'P&L': round(pnl, 2),
-        'Return %': round(return_pct, 2)
-    })
+            total_value += value
+            total_cost += cost
 
-df = pd.DataFrame(results)
-st.subheader(t['summary'])
-st.dataframe(df)
+            results.append({
+                'Ticker': ticker,
+                'Shares': shares,
+                'Buy Price': buy_price,
+                'Current Price': round(current_price, 2),
+                'Current Value': round(value, 2),
+                'P&L': round(pnl, 2),
+                'Return %': round(return_pct, 2)
+            })
 
-st.markdown(f"**Total Cost:** ${round(total_cost,2)}")
-st.markdown(f"**Total Value:** ${round(total_value,2)}")
-st.markdown(f"**Total P&L:** ${round(total_value - total_cost,2)}")
+        df = pd.DataFrame(results)
+        st.subheader(t['summary'])
+        st.dataframe(df)
 
-st.subheader(t['allocation'])
-fig1, ax1 = plt.subplots()
-ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
-st.pyplot(fig1)
+        st.markdown(f"**Total Cost:** ${round(total_cost,2)}")
+        st.markdown(f"**Total Value:** ${round(total_value,2)}")
+        st.markdown(f"**Total P&L:** ${round(total_value - total_cost,2)}")
 
-st.subheader(t['compare'])
-start_date = "2023-01-01"
-prices = pd.DataFrame()
-for item in portfolio:
-    ticker = item['ticker']
-    shares = item['shares']
-    data_hist = yf.download(ticker, start=start_date)['Adj Close']
-    prices[ticker] = data_hist * shares
+        st.subheader(t['allocation'])
+        fig1, ax1 = plt.subplots()
+        ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
+        st.pyplot(fig1)
 
-portfolio_value = prices.sum(axis=1)
-sp500 = yf.download("^GSPC", start=start_date)['Adj Close']
-sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
+        st.subheader(t['compare'])
+        start_date = "2023-01-01"
+        prices = pd.DataFrame()
+        for item in portfolio:
+            ticker = item['ticker']
+            shares = item['shares']
+            data_hist = yf.download(ticker, start=start_date)['Adj Close']
+            prices[ticker] = data_hist * shares
 
-fig2, ax2 = plt.subplots()
-portfolio_value.plot(ax=ax2, label="Your Portfolio")
-sp500.plot(ax=ax2, label="S&P 500", linestyle="--")
-ax2.set_title("Portfolio vs. S&P 500")
-ax2.legend()
-ax2.grid(True)
-st.pyplot(fig2)
+        portfolio_value = prices.sum(axis=1)
+        sp500 = yf.download("^GSPC", start=start_date)['Adj Close']
+        sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
 
-st.subheader(t['metrics'])
-returns = portfolio_value.pct_change().dropna()
-sharpe_ratio = (returns.mean() / returns.std()) * np.sqrt(252)
-roll_max = portfolio_value.cummax()
-drawdown = (portfolio_value - roll_max) / roll_max
-max_drawdown = drawdown.min()
-days = (portfolio_value.index[-1] - portfolio_value.index[0]).days
-cagr = (portfolio_value[-1] / portfolio_value[0])**(365.0/days) - 1
+        fig2, ax2 = plt.subplots()
+        portfolio_value.plot(ax=ax2, label="Your Portfolio")
+        sp500.plot(ax=ax2, label="S&P 500", linestyle="--")
+        ax2.set_title("Portfolio vs. S&P 500")
+        ax2.legend()
+        ax2.grid(True)
+        st.pyplot(fig2)
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
-col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
-col3.metric("CAGR", f"{cagr:.2%}")
+        st.subheader(t['metrics'])
+        returns = portfolio_value.pct_change().dropna()
+        sharpe_ratio = (returns.mean() / returns.std()) * np.sqrt(252)
+        roll_max = portfolio_value.cummax()
+        drawdown = (portfolio_value - roll_max) / roll_max
+        max_drawdown = drawdown.min()
+        days = (portfolio_value.index[-1] - portfolio_value.index[0]).days
+        cagr = (portfolio_value[-1] / portfolio_value[0])**(365.0/days) - 1
+
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+        col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
+        col3.metric("CAGR", f"{cagr:.2%}")
 
 else:
     st.warning(t['warning'])
