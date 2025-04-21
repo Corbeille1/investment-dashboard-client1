@@ -102,9 +102,29 @@ if email_input == EMAIL and password_input == PASSWORD:
             })
 
     
+    # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
+    st.caption("Use this if you want to track existing portfolio.")
+    uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".json"):
+                portfolio_loaded = json.load(uploaded_file)
+            elif uploaded_file.name.endswith(".csv"):
+                df_uploaded = pd.read_csv(uploaded_file)
+                portfolio_loaded = df_uploaded.to_dict(orient="records")
+            else:
+                raise ValueError("Unsupported file format")
+            # Auto-fill the inputs
+            tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
+            shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
+            buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
+            st.success("✅ Portfolio loaded and fields pre-filled!")
+        except Exception as e:
+            st.error(f"❌ Failed to load portfolio: {e}")
+        tickers = shares = buy_prices = ""
     
     # --- POST-TRACKING UPLOAD (Merge another portfolio) ---
-    
+    st.caption("Use this if you want to add to your portfolio.")
     uploaded_file_post = st.file_uploader("📂 Upload new portfolio data", type=["json", "csv"], key="upload_merge")
 
     if uploaded_file_post:
