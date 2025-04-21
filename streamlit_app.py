@@ -210,3 +210,205 @@ if st.session_state.show_dashboard:
         st.markdown(f"**Total Cost:** ${round(total_cost, 2)}")
         st.markdown(f"**Total Value:** ${round(total_value, 2)}")
         st.markdown(f"**Total P&L:** ${round(total_value - total_cost, 2)}")
+        # --- Pie Chart ---
+        st.subheader(t['allocation'])
+        fig1, ax1 = plt.subplots()
+        ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
+        st.pyplot(fig1)
+
+        # --- Comparison Chart ---
+        st.subheader(t['compare'])
+        start_date = "2023-01-01"
+        prices = pd.DataFrame()
+        for item in portfolio:
+            ticker = item['ticker']
+            shares = item['shares']
+            hist = yf.download(ticker, start=start_date)
+            if 'Adj Close' in hist:
+                data_hist = hist['Adj Close']
+            else:
+                data_hist = hist['Close']
+            prices[ticker] = data_hist * shares
+
+        portfolio_value = prices.sum(axis=1)
+        daily_pnl = portfolio_value.diff().fillna(0)
+        cumulative_pnl = portfolio_value - portfolio_value.iloc[0]
+
+        st.subheader("📈 Daily P&L Over Time")
+        st.line_chart(daily_pnl)
+
+        st.subheader("📊 Cumulative P&L Over Time")
+        st.line_chart(cumulative_pnl)
+
+        returns = portfolio_value.pct_change().dropna()
+
+        # Monthly returns
+        monthly_returns = portfolio_value.resample('M').ffill().pct_change().dropna()
+        st.subheader("📆 Monthly Returns")
+        st.bar_chart(monthly_returns)
+
+        # Monthly volatility
+        monthly_volatility = returns.resample('M').std()
+        st.subheader("🌪️ Monthly Volatility")
+        st.line_chart(monthly_volatility)
+
+        # Benchmark S&P 500
+        st.subheader(t['compare'])
+        sp500_data = yf.download("^GSPC", start=start_date)
+        if 'Adj Close' in sp500_data:
+            sp500 = sp500_data['Adj Close']
+        else:
+            sp500 = sp500_data['Close']
+        sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
+
+        fig2, ax2 = plt.subplots()
+        portfolio_value.plot(ax=ax2, label="Your Portfolio")
+        sp500.plot(ax=ax2, label="S&P 500", linestyle="--")
+        ax2.set_title("Portfolio vs. S&P 500")
+        ax2.legend()
+        ax2.grid(True)
+        st.pyplot(fig2)
+
+        # --- Performance Metrics ---
+        st.subheader(t['metrics'])
+        sharpe_ratio = (returns.mean() / returns.std()) * np.sqrt(252)
+        roll_max = portfolio_value.cummax()
+        drawdown = (portfolio_value - roll_max) / roll_max
+        max_drawdown = drawdown.min()
+        days = (portfolio_value.index[-1] - portfolio_value.index[0]).days
+        cagr = (portfolio_value[-1] / portfolio_value[0]) ** (365.0 / days) - 1
+
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+        col2.metric("Max Drawdown", f"{max_drawdown:.2%}")
+        col3.metric("CAGR", f"{cagr:.2%}")
+        # Save charts as PNG
+        chart_paths = {}
+
+        # Pie chart
+        fig1, ax1 = plt.subplots()
+        ax1.pie(df['Current Value'], labels=df['Ticker'], autopct='%1.1f%%')
+        ax1.set_title("Asset Allocation")
+        chart_paths['asset_allocation'] = "/tmp/asset_allocation.png"
+        fig1.savefig(chart_paths['asset_allocation'])
+
+        # Daily P&L
+        fig2, ax2 = plt.subplots()
+        daily_pnl.plot(ax=ax2)
+        ax2.set_title("Daily P&L Over Time")
+        chart_paths['daily_pnl'] = "/tmp/daily_pnl.png"
+        fig2.savefig(chart_paths['daily_pnl'])
+
+        # Cumulative P&L
+        fig3, ax3 = plt.subplots()
+        cumulative_pnl.plot(ax=ax3)
+        ax3.set_title("Cumulative P&L Over Time")
+        chart_paths['cumulative_pnl'] = "/tmp/cumulative_pnl.png"
+        fig3.savefig(chart_paths['cumulative_pnl'])
+
+        # Monthly Returns
+        fig4, ax4 = plt.subplots()
+        monthly_returns.plot(kind='bar', ax=ax4)
+        ax4.set_title("Monthly Returns")
+        chart_paths['monthly_returns'] = "/tmp/monthly_returns.png"
+        fig4.savefig(chart_paths['monthly_returns'])
+
+        # Monthly Volatility
+        fig5, ax5 = plt.subplots()
+        monthly_volatility.plot(kind='bar', ax=ax5, color='orange')
+        ax5.set_title("Monthly Volatility")
+        chart_paths['monthly_volatility'] = "/tmp/monthly_volatility.png"
+        fig5.savefig(chart_paths['monthly_volatility'])
+
+        # Portfolio vs. S&P
+        fig6, ax6 = plt.subplots()
+        portfolio_value.plot(ax=ax6, label="Your Portfolio")
+        sp500.plot(ax=ax6, label="S&P 500", linestyle="--")
+        ax6.set_title("Portfolio vs. S&P 500")
+        ax6.legend()
+        chart_paths['portfolio_vs_sp500'] = "/tmp/portfolio_vs_sp500.png"
+        fig6.savefig(chart_paths['portfolio_vs_sp500'])
+
+        # --- PDF Class ---
+        class FinalStyledPDF(FPDF):
+            def header(self):
+                self.set_font('Helvetica', 'B', 16)
+                self.cell(0, 10, "Your Investment Portfolio Summary", ln=True, align='C')
+                self.set_font('Helvetica', '', 10)
+                self.cell(0, 10, f"Report generated on: {datetime.now().strftime('%Y-%m-%d')}", ln=True, align='C')
+                self.ln(5)
+
+            def add_summary_block(self, total_value, pnl, sharpe, drawdown, cagr):
+                self.set_fill_color(240, 240, 240)
+                self.set_font("Helvetica", "B", 12)
+                self.cell(0, 8, "Portfolio Performance Overview", ln=True, fill=True)
+                self.set_font("Helvetica", "", 11)
+                self.cell(0, 8, f"Total Value: ${total_value:,.2f}", ln=True)
+                self.cell(0, 8, f"Profit / Loss: ${pnl:,.2f}", ln=True)
+                self.cell(0, 8, f"Sharpe Ratio: {sharpe:.2f}", ln=True)
+                self.cell(0, 8, f"Max Drawdown: {drawdown:.2%}", ln=True)
+                self.cell(0, 8, f"CAGR: {cagr:.2%}", ln=True)
+                self.ln(5)
+
+            def add_chart(self, img_path, title):
+                self.set_font("Helvetica", "B", 11)
+                self.cell(0, 9, title, ln=True)
+                self.image(img_path, w=170)
+                self.ln(4)
+
+            def add_table(self, df):
+                self.set_font("Helvetica", "B", 10)
+                epw = self.w - 2 * self.l_margin
+                col_width = epw / len(df.columns)
+                for col in df.columns:
+                    self.cell(col_width, 8, col, border=1)
+                self.ln()
+                self.set_font("Helvetica", "", 9)
+                for _, row in df.iterrows():
+                    for item in row:
+                        text = f"{round(item, 2)}" if isinstance(item, float) else str(item)
+                        self.cell(col_width, 8, text, border=1)
+                    self.ln()
+
+        # PDF generator
+        def generate_full_pdf(df, total_cost, total_value, pnl, sharpe, drawdown, cagr, chart_paths):
+            pdf = FinalStyledPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_page()
+            pdf.add_summary_block(total_value, pnl, sharpe, drawdown, cagr)
+            pdf.add_chart(chart_paths['asset_allocation'], "Asset Allocation")
+            pdf.add_chart(chart_paths['portfolio_vs_sp500'], "Portfolio vs. S&P 500")
+            pdf.add_chart(chart_paths['daily_pnl'], "Daily P&L Over Time")
+            pdf.add_chart(chart_paths['cumulative_pnl'], "Cumulative P&L Over Time")
+            pdf.add_chart(chart_paths['monthly_returns'], "Monthly Returns")
+            pdf.add_chart(chart_paths['monthly_volatility'], "Monthly Volatility")
+            pdf.add_table(df)
+            return pdf.output(dest='S').encode('latin1')
+
+        # Generate and download
+        pdf_data = generate_full_pdf(
+            df=df,
+            total_cost=total_cost,
+            total_value=total_value,
+            pnl=total_value - total_cost,
+            sharpe=sharpe_ratio,
+            drawdown=max_drawdown,
+            cagr=cagr,
+            chart_paths=chart_paths
+        )
+
+        csv_data = df.to_csv(index=False).encode('utf-8')
+
+        st.download_button(
+            label="📄 Download Portfolio CSV",
+            data=csv_data,
+            file_name="portfolio_summary.csv",
+            mime="text/csv"
+        )
+
+        st.download_button(
+            label="📑 Download Portfolio PDF",
+            data=pdf_data,
+            file_name="portfolio_summary.pdf",
+            mime="application/pdf"
+        )
