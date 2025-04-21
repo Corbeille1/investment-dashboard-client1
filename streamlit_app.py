@@ -10,6 +10,14 @@ import os
 
 history_file_path = "performance_history.json"
 
+# Load performance history from file if exists
+if "performance_history" not in st.session_state:
+    if os.path.exists("performance_history.json"):
+        with open("performance_history.json", "r") as f:
+            st.session_state.performance_history = json.load(f)
+    else:
+        st.session_state.performance_history = []
+
 # 🔧 THIS LINE MUST COME RIGHT AFTER IMPORTS
 st.set_page_config(page_title="Investment Dashboard", layout="wide")
 
@@ -251,6 +259,9 @@ if st.session_state.show_dashboard:
                 "total_cost": total_cost,
                 "pnl": total_value - total_cost
             })
+        # ✅ Save to JSON file for persistence
+        with open("performance_history.json", "w") as f:
+            json.dump(st.session_state.performance_history, f, indent=4)
 
         st.subheader(t['summary'])
         st.dataframe(df)
