@@ -187,7 +187,17 @@ if email_input == EMAIL and password_input == PASSWORD:
             prices[ticker] = data_hist * shares
 
         portfolio_value = prices.sum(axis=1)
-        sp500 = yf.download("^GSPC", start=start_date)['Adj Close']
+        
+        sp500_data = yf.download("^GSPC", start=start_date)
+        
+        if 'Adj Close' in sp500_data.columns:
+            sp500 = sp500_data['Adj Close']
+        elif 'Close' in sp500_data.columns:
+            sp500 = sp500_data['Close']
+        else:
+            st.error("❌ Could not retrieve S&P 500 data. Please try again later.")
+            st.stop()
+            
         sp500 = sp500 / sp500.iloc[0] * portfolio_value.iloc[0]
 
         fig2, ax2 = plt.subplots()
