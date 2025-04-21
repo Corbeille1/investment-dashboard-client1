@@ -302,8 +302,12 @@ if st.session_state.show_dashboard:
         portfolio_value = prices.sum(axis=1)
         cumulative_pnl = (portfolio_value - total_cost)
 
-        st.write("🔍 History DF Columns:", history_df.columns.tolist())
-        st.dataframe(history_df)
+        if "history" in st.session_state and st.session_state.history:
+            history_df = pd.DataFrame(st.session_state.history)
+            st.write("🔍 History DF Columns:", history_df.columns.tolist())
+            st.dataframe(history_df)
+        else:
+            st.info("📭 No historical data available to show columns.")
 
         if not history_df.empty:
             st.write("🔍 History DF Columns:", history_df.columns.tolist())
