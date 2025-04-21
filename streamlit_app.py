@@ -113,7 +113,7 @@ if show_dashboard:
             st.success("✅ Portfolio loaded and fields pre-filled!")
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
-            tickers = shares = buy_prices = ""
+            
     if st.button(t['track']):
         tickers = [x.strip().upper() for x in tickers.split(",")]
         shares = [int(x.strip()) for x in shares.split(",")]
