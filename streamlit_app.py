@@ -173,7 +173,17 @@ if email_input == EMAIL and password_input == PASSWORD:
         for item in portfolio:
             ticker = item['ticker']
             shares = item['shares']
-            data_hist = yf.download(ticker, start=start_date)['Adj Close']
+            
+            hist = yf.download(ticker, start=start_date)
+            
+            if 'Adj Close' in hist.columns:
+                data_hist = hist['Adj Close']
+            elif 'Close' in hist.columns:
+                data_hist = hist['Close']
+            else:
+                st.error(f"❌ No valid price data found for {ticker}. Please check the symbol.")
+                st.stop()
+            
             prices[ticker] = data_hist * shares
 
         portfolio_value = prices.sum(axis=1)
