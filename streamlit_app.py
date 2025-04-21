@@ -36,24 +36,34 @@ t = texts[lang]
 EMAIL = st.secrets.get("EMAIL", "amahali.we@gmail.com")
 PASSWORD = st.secrets.get("PASSWORD", "changeme")
 
-st.title(f"🔒 {t['login']}")
+# Initialize login state if not set
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-email_input = st.text_input(t['email'])
-password_input = st.text_input(t['password'], type="password")
-login_button = st.button("Access Dashboard")
+# --- LOGGED OUT VIEW ---
+if not st.session_state.logged_in:
+    st.title(f"🔒 {t['login']}")
 
-# Initialize login state
-if 'show_dashboard' not in st.session_state:
-    st.session_state['show_dashboard'] = False
+    with st.form("login_form", clear_on_submit=False):
+        email_input = st.text_input(t['email'])
+        password_input = st.text_input(t['password'], type="password")
+        submit_login = st.form_submit_button("Access Dashboard")
 
-# Handle login logic
-if login_button:
-    if email_input.strip().lower() == EMAIL.lower() and password_input.strip() == PASSWORD:
-        st.success(t['success'])
-        st.session_state['show_dashboard'] = True
-    else:
-        st.error("❌ Invalid credentials. Please try again.")
-        st.session_state['show_dashboard'] = False
+    if submit_login:
+        if email_input.strip().lower() == EMAIL.lower() and password_input.strip() == PASSWORD:
+            st.session_state.logged_in = True
+            st.experimental_rerun()
+        else:
+            st.error("❌ Invalid credentials. Please try again.")
+    st.stop()
+
+# --- LOGGED IN VIEW ---
+# Add a logout button in the sidebar or top
+with st.sidebar:
+    st.markdown("### 👤 Account")
+    if st.button("🚪 Log out"):
+        st.session_state.logged_in = False
+        st.experimental_rerun()
 
 # Show dashboard if logged in
 if st.session_state['show_dashboard']:
