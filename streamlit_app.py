@@ -460,7 +460,7 @@ if st.session_state.show_dashboard:
             mime="application/pdf"
         )
 
-st.markdown(f"**Total P&L:** ${round(total_value - total_cost,2)}")
+
 # --- Historical Performance Tracker ---
 st.subheader("📊 Historical Portfolio Performance")
 
@@ -488,14 +488,5 @@ if not history_df.empty:
 else:
     st.info("📭 No historical performance yet. Track a portfolio to begin.")
 
-import pandas as pd
 
-history_df = pd.DataFrame(st.session_state.history)
-
-if not history_df.empty:
-    st.subheader("📆 Portfolio Daily Performance History")
-    st.line_chart(history_df.set_index("date")[["pnl"]])
-
-    csv_data = history_df.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download P&L History CSV", data=csv_data, file_name="daily_pnl_history.csv", mime="text/csv")
 
