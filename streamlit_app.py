@@ -319,21 +319,6 @@ if st.session_state['show_dashboard']:
         ax6.legend()
         chart_paths['portfolio_vs_sp500'] = "/tmp/portfolio_vs_sp500.png"
         fig6.savefig(chart_paths['portfolio_vs_sp500'])
-
-
-
-        # 📄 Full Styled PDF Export with Charts
-        pdf_data = generate_full_pdf(
-            df=df,
-            total_cost=total_cost,
-            total_value=total_value,
-            pnl=total_value - total_cost,
-            sharpe=sharpe_ratio,
-            drawdown=max_drawdown,
-            cagr=cagr,
-            chart_paths=chart_paths
-        )
-
         
         class FinalStyledPDF(FPDF):
             def header(self):
@@ -389,7 +374,20 @@ if st.session_state['show_dashboard']:
             
             pdf.add_table(df)
             return pdf.output(dest='S').encode('latin1')
-            
+
+
+        # 📄 Full Styled PDF Export with Charts
+        pdf_data = generate_full_pdf(
+            df=df,
+            total_cost=total_cost,
+            total_value=total_value,
+            pnl=total_value - total_cost,
+            sharpe=sharpe_ratio,
+            drawdown=max_drawdown,
+            cagr=cagr,
+            chart_paths=chart_paths
+        )
+        
         csv_data = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📄 Download Portfolio CSV",
