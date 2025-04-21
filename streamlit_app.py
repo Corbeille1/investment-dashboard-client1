@@ -94,7 +94,7 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'buy_price': buy_prices[i]
             })
 
-        price_data = yf.download(tickers, period="1d")
+        price_data = yf.download(tickers, period="5d")
 
         # 🛡 Handle unexpected structure
         
@@ -103,6 +103,9 @@ if email_input == EMAIL and password_input == PASSWORD:
                 data = price_data['Adj Close'].iloc[-1]
             except KeyError as e:
                 st.error(f"❌ 'Adj Close' not found. Problem likely with: {str(e)} — check ticker symbols or try again later.")
+                st.stop()
+            except IndexError:
+                st.error("❌ No recent data available. Market might be closed or ticker might be invalid.")
                 st.stop()
         elif 'Adj Close' in price_data.columns:
             # Single ticker
