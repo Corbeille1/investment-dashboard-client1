@@ -84,14 +84,12 @@ if email_input == EMAIL and password_input == PASSWORD:
                 portfolio_loaded = df_uploaded.to_dict(orient="records")
             else:
                 raise ValueError("Unsupported file format")
-
-        # Auto-fill the inputs
-        tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
-        shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
-        buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
-        
-        st.success("✅ Portfolio loaded and fields pre-filled!")
-        
+            # Auto-fill the inputs
+            tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
+            shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
+            buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
+            
+            st.success("✅ Portfolio loaded and fields pre-filled!")
     except Exception as e:
         st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
