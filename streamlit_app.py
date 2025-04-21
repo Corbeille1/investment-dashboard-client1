@@ -182,6 +182,9 @@ if st.session_state.show_dashboard:
 
         import datetime
         
+        if 'history' not in st.session_state:
+            st.session_state.history = []
+        
         today = datetime.date.today().isoformat()
         daily_pnl = round(total_value - total_cost, 2)
         
