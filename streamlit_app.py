@@ -73,6 +73,26 @@ password_input = st.text_input(t['password'], type="password")
 if email_input == EMAIL and password_input == PASSWORD:
     st.success(t['success'])
 
+    # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
+    uploaded_file = st.file_uploader("📂 Load portfolio to pre-fill", type=["json", "csv"])
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".json"):
+                portfolio_loaded = json.load(uploaded_file)
+        else:
+            df_uploaded = pd.read_csv(uploaded_file)
+            portfolio_loaded = df_uploaded.to_dict(orient="records")
+
+        # Auto-fill the inputs
+        tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
+        shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
+        buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
+        
+        st.success("✅ Portfolio loaded and fields pre-filled!")
+    except Exception as e:
+        st.error(f"❌ Failed to load portfolio: {e}")
+        tickers = shares = buy_prices = ""
+
     st.title(f"📊 {t['title']}")
     st.subheader(t['tickers'])
     tickers = st.text_input("", "AAPL, TSLA, VOO")
@@ -97,6 +117,22 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'shares': shares[i],
                 'buy_price': buy_prices[i]
             })
+    # --- POST-TRACKING UPLOAD (Merge another portfolio) ---
+    uploaded_file_post = st.file_uploader("📂 Add another portfolio (merge)", type=["json", "csv"], key="upload2")
+    if uploaded_file_post:
+        try:
+            if uploaded_file_post.name.endswith(".json"):
+                additional_portfolio = json.load(uploaded_file_post)
+            else:
+                df_extra = pd.read_csv(uploaded_file_post)
+                additional_portfolio = df_extra.to_dict(orient="records")
+
+        # Merge with existing portfolio
+        portfolio.extend(additional_portfolio)
+        st.success("✅ Additional portfolio merged successfully!")
+    except Exception as e:
+        st.error(f"❌ Failed to merge portfolio: {e}")
+
     # -------- LOAD PORTFOLIO FROM FILE --------
     uploaded_file = st.file_uploader("📂 Load a saved portfolio", type=["json", "csv"])
     if uploaded_file:
