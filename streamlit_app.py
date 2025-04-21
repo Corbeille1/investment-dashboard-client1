@@ -107,13 +107,14 @@ if show_dashboard:
             st.success("✅ Portfolio loaded and fields pre-filled!")
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
-        tickers = shares = buy_prices = ""
+            tickers = shares = buy_prices = ""
+            
     st.subheader(t['tickers'])
-    tickers = st.text_input("", "AAPL, TSLA, VOO")
+    tickers = st.text_input("", tickers if 'tickers' in locals() else "AAPL, TSLA, VOO")
     st.subheader(t['shares'])
-    shares = st.text_input("", "10, 5, 7")
+    shares = st.text_input("", shares if 'shares' in locals() else "10, 5, 7")
     st.subheader(t['buy_prices'])
-    buy_prices = st.text_input("", "145, 700, 380")
+    buy_prices = st.text_input("", buy_prices if 'buy_prices' in locals() else "145, 700, 380")
     
     if st.button(t['track']):
         tickers = [x.strip().upper() for x in tickers.split(",")]
