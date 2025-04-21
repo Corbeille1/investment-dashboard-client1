@@ -72,6 +72,11 @@ email_input = st.text_input(t['email'])
 password_input = st.text_input(t['password'], type="password")
 login_button = st.button("Access Dashboard")
 
+# Initialize login state
+if 'show_dashboard' not in st.session_state:
+    st.session_state['show_dashboard'] = False
+
+# Handle login logic
 if login_button:
     if email_input == EMAIL and password_input == PASSWORD:
         st.success(t['success'])
@@ -79,10 +84,9 @@ if login_button:
     else:
         st.error("❌ Invalid credentials. Please try again.")
         show_dashboard = False
-else:
-    show_dashboard = False
 
-if show_dashboard:    
+# Show dashboard if logged in
+if st.session_state['show_dashboard']:    
 
     portfolio = []  # ✅ Add this here
     
@@ -95,21 +99,27 @@ if show_dashboard:
     st.subheader(t['buy_prices'])
     buy_prices = st.text_input("", buy_prices if 'buy_prices' in locals() else "145, 700, 380")
     # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
-    st.caption("Use this if you want to track existing portfolio.")
+    # Initialize portfolio if not yet set
+    if 'portfolio_loaded' not in st.session_state:
+        st.session_state['portfolio_loaded'] = []
+        st.session_state['tickers'] = ""
+        st.session_state['shares'] = ""
+        st.session_state['buy_prices'] = ""
+        st.caption("Use this if you want to track existing portfolio.")
     uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
     if uploaded_file:
         try:
             if uploaded_file.name.endswith(".json"):
-                portfolio_loaded = json.load(uploaded_file)
+                st.session_state['portfolio_loaded'] = json.load(uploaded_file)
             elif uploaded_file.name.endswith(".csv"):
                 df_uploaded = pd.read_csv(uploaded_file)
-                portfolio_loaded = df_uploaded.to_dict(orient="records")
+                st.session_state['portfolio_loaded'] = df_uploaded.to_dict(orient="records")
             else:
                 raise ValueError("Unsupported file format")
             # Auto-fill the inputs
-            tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
-            shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
-            buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
+            st.session_state['tickers'] = ', '.join([item['ticker'] for item in st.session_state['portfolio_loaded']])
+            st.session_state['shares'] = ', '.join([str(item['shares']) for item in st.session_state['portfolio_loaded']])
+            st.session_state['buy_prices'] = ', '.join([str(item['buy_price']) for item in st.session_state['portfolio_loaded']])
             st.success("✅ Portfolio loaded and fields pre-filled!")
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
