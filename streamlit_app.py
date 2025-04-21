@@ -224,6 +224,19 @@ if st.session_state['show_dashboard']:
         st.subheader("📊 Cumulative P&L Over Time")
         st.line_chart(cumulative_pnl)
 
+        # --- Monthly Returns ---
+        monthly_returns = portfolio_value.resample('M').ffill().pct_change().dropna()
+
+        st.subheader("📆 Monthly Returns")
+        st.bar_chart(monthly_returns)
+
+        # --- Monthly Volatility (Optional) ---
+        monthly_volatility = returns.resample('M').std()
+
+        st.subheader("🌪️ Monthly Volatility")
+        st.line_chart(monthly_volatility)
+
+
         # --- Compare to Benchmark (S&P 500) ---
         st.subheader(t['compare'])
         sp500_data = yf.download("^GSPC", start=start_date)
