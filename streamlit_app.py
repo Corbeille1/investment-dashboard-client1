@@ -73,8 +73,11 @@ password_input = st.text_input(t['password'], type="password")
 if email_input == EMAIL and password_input == PASSWORD:
     st.success(t['success'])
 
+    portfolio = []  # ✅ Add this here
+
     # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
-    uploaded_file = st.file_uploader("📂 Load portfolio to pre-fill", type=["json", "csv"])
+    with st.expander("📂 Load a saved portfolio to start"):
+        uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
     if uploaded_file:
         try:
             if uploaded_file.name.endswith(".json"):
@@ -93,14 +96,14 @@ if email_input == EMAIL and password_input == PASSWORD:
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
-
+    
     st.title(f"📊 {t['title']}")
     st.subheader(t['tickers'])
-    tickers = st.text_input("", "AAPL, TSLA, VOO")
+    tickers = st.text_input("", tickers if 'tickers' in locals() else "AAPL, TSLA, VOO")
     st.subheader(t['shares'])
-    shares = st.text_input("", "10, 5, 7")
+    shares = st.text_input("", shares if 'shares' in locals() else "10, 5, 7")
     st.subheader(t['buy_prices'])
-    buy_prices = st.text_input("", "145, 700, 380")
+    buy_prices = st.text_input("", buy_prices if 'buy_prices' in locals() else "145, 700, 380")
 
     if st.button(t['track']):
         tickers = [x.strip().upper() for x in tickers.split(",")]
@@ -118,8 +121,13 @@ if email_input == EMAIL and password_input == PASSWORD:
                 'shares': shares[i],
                 'buy_price': buy_prices[i]
             })
+
+    
+    
     # --- POST-TRACKING UPLOAD (Merge another portfolio) ---
-    uploaded_file_post = st.file_uploader("📂 Add another portfolio (merge)", type=["json", "csv"], key="upload2")
+    st.subheader("📁 Add another portfolio (merge)")
+    uploaded_file_post = st.file_uploader("📂 Upload to merge with current portfolio", type=["json", "csv"], key="upload_merge")
+
     if uploaded_file_post:
         try:
             if uploaded_file_post.name.endswith(".json"):
@@ -127,10 +135,13 @@ if email_input == EMAIL and password_input == PASSWORD:
             else:
                 df_extra = pd.read_csv(uploaded_file_post)
                 additional_portfolio = df_extra.to_dict(orient="records")
-
-            # Merge with existing portfolio
-            portfolio.extend(additional_portfolio)
-            st.success("✅ Additional portfolio merged successfully!")
+            
+            # 🚨 Validate merged portfolio structure
+            if isinstance(additional_portfolio, list) and all('ticker' in x and 'shares' in x and 'buy_price' in x for x in additional_portfolio):
+                portfolio.extend(additional_portfolio)
+                st.success("✅ Portfolio successfully merged!")
+            else:
+                st.error("⚠️ Invalid file format. Each item must include 'ticker', 'shares', and 'buy_price'.")
         except Exception as e:
             st.error(f"❌ Failed to merge portfolio: {e}")
 
