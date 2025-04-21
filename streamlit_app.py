@@ -79,10 +79,10 @@ if login_button:
     else:
         st.error("❌ Invalid credentials. Please try again.")
         show_dashboard = False
- else:
+else:
     show_dashboard = False
 
- if show_dashboard:    
+if show_dashboard:    
 
     portfolio = []  # ✅ Add this here
     
