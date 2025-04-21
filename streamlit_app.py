@@ -86,6 +86,8 @@ if show_dashboard:
 
     portfolio = []  # ✅ Add this here
     
+    
+    st.title(f"📊 {t['title']}")
     # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
     st.caption("Use this if you want to track existing portfolio.")
     uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
@@ -106,8 +108,6 @@ if show_dashboard:
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
         tickers = shares = buy_prices = ""
-    
-    st.title(f"📊 {t['title']}")
     st.subheader(t['tickers'])
     tickers = st.text_input("", "AAPL, TSLA, VOO")
     st.subheader(t['shares'])
