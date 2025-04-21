@@ -75,36 +75,14 @@ if email_input == EMAIL and password_input == PASSWORD:
     st.success(t['success'])
 
     portfolio = []  # ✅ Add this here
-
-    # --- PRE-TRACKING UPLOAD (Pre-fill input fields) ---
-    with st.expander("📂 Load a saved portfolio to start"):
-        uploaded_file = st.file_uploader("Upload your portfolio (JSON or CSV)", type=["json", "csv"])
-    if uploaded_file:
-        try:
-            if uploaded_file.name.endswith(".json"):
-                portfolio_loaded = json.load(uploaded_file)
-            elif uploaded_file.name.endswith(".csv"):
-                df_uploaded = pd.read_csv(uploaded_file)
-                portfolio_loaded = df_uploaded.to_dict(orient="records")
-            else:
-                raise ValueError("Unsupported file format")
-            # Auto-fill the inputs
-            tickers = ', '.join([item['ticker'] for item in portfolio_loaded])
-            shares = ', '.join([str(item['shares']) for item in portfolio_loaded])
-            buy_prices = ', '.join([str(item['buy_price']) for item in portfolio_loaded])
-            
-            st.success("✅ Portfolio loaded and fields pre-filled!")
-        except Exception as e:
-            st.error(f"❌ Failed to load portfolio: {e}")
-        tickers = shares = buy_prices = ""
     
     st.title(f"📊 {t['title']}")
     st.subheader(t['tickers'])
-    tickers = st.text_input("", tickers if 'tickers' in locals() else "AAPL, TSLA, VOO")
+    tickers = st.text_input("", "AAPL, TSLA, VOO")
     st.subheader(t['shares'])
-    shares = st.text_input("", shares if 'shares' in locals() else "10, 5, 7")
+    shares = st.text_input("", "10, 5, 7")
     st.subheader(t['buy_prices'])
-    buy_prices = st.text_input("", buy_prices if 'buy_prices' in locals() else "145, 700, 380")
+    buy_prices = st.text_input("", "145, 700, 380")
 
     if st.button(t['track']):
         tickers = [x.strip().upper() for x in tickers.split(",")]
@@ -126,8 +104,8 @@ if email_input == EMAIL and password_input == PASSWORD:
     
     
     # --- POST-TRACKING UPLOAD (Merge another portfolio) ---
-    st.subheader("📁 Add another portfolio (merge)")
-    uploaded_file_post = st.file_uploader("📂 Upload to merge with current portfolio", type=["json", "csv"], key="upload_merge")
+    
+    uploaded_file_post = st.file_uploader("📂 Upload new portfolio data", type=["json", "csv"], key="upload_merge")
 
     if uploaded_file_post:
         try:
