@@ -92,7 +92,7 @@ if email_input == EMAIL and password_input == PASSWORD:
             st.success("✅ Portfolio loaded and fields pre-filled!")
         except Exception as e:
             st.error(f"❌ Failed to load portfolio: {e}")
-            tickers = shares = buy_prices = ""
+        tickers = shares = buy_prices = ""
 
     st.title(f"📊 {t['title']}")
     st.subheader(t['tickers'])
